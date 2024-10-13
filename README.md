@@ -3,7 +3,7 @@
 ### For the frontend, install Node.js and run in the terminal:
 1. `npm install -g npm`
 2. `npm install express`
-3. Next, 'cd team6project` directory
+3. Next, `cd team6project` directory
 4. `npm init`
 
 ### These steps only need to be done once, after this you will be able to start the React App with the following steps:
