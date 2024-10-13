@@ -10,6 +10,6 @@
 1. Run in the terminal, `cd team6project`
 2. `node server.js ` Starts the database
 
-3. Open a new termial window run `cd team6project`
-4. `npm start` Starts the React App
+3. Open a new terminal window and run `cd team6project`
+4. `npm start` Starts the React App!
 
