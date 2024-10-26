@@ -1,22 +1,22 @@
 import React, { useEffect, useState } from 'react';
-import Navbar from './navbar';
 import './App.css';
+import TopNav from './TopNav';
+import LeftNav from './LeftNav';
+import RightCart from './RightCart';
 
 function App() {
-  const [schema, setSchema] = useState([]);
-
-  useEffect(() => {
-    fetch('http://localhost:3001/api/schema')
-      .then(response => response.json())
-      .then(data => setSchema(data))
-      .catch(err => console.error('Error fetching schema:', err));
-  }, []);
-
   return (
-    <div className="App">
-      <header className="App-header">
-      <Navbar />
-      </header>
+    <div className="app-container">
+      <TopNav />
+      <div className="main-content">
+        <LeftNav />
+        <div className="dashboard">
+          {/* Dashboard content goes here */}
+          <h1>Dashboard</h1>
+          <p>This is where all the available merchandise will be displayed.</p>
+        </div>
+        <RightCart />
+      </div>
     </div>
   );
 }

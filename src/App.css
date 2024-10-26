@@ -1,47 +1,96 @@
-/* Navbar.css */
-.navbar {
+/* Top NavBar */
+
+.top-nav {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  background-color: #333;
   padding: 10px 20px;
-  color: #fff;
+  background-color: #f7f7f7;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.navbar-logo {
-  font-size: 24px;
-  font-weight: bold;
-  text-align: center;
-  flex-grow: 1;
+.search-filter input {
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
 }
 
-.navbar-links {
-  list-style-type: none;
-  display: flex;
-  gap: 15px;
+.search-filter button {
+  margin-left: 10px;
+  padding: 8px 12px;
+  background-color: orange;
+  border: none;
+  color: white;
+  border-radius: 4px;
 }
 
-.left-links {
-  margin-right: auto;
+.user-info button {
+  padding: 8px 12px;
+  background-color: #007bff;
+  border: none;
+  color: white;
+  border-radius: 4px;
 }
 
-.right-links {
-  margin-left: auto;
+/* Left Navbar */
+
+.left-nav {
+  width: 200px;
+  background-color: #fff;
+  padding: 20px;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
 }
 
-.navbar-links li {
-  display: inline;
+.left-nav ul {
+  list-style: none;
+  padding: 0;
 }
 
-.navbar-links a {
-  color: #fff;
+.left-nav li {
+  margin-bottom: 20px;
+}
+
+.left-nav a {
   text-decoration: none;
-  font-size: 18px;
+  color: #333;
+  font-weight: bold;
+  padding: 10px;
+  display: block;
 }
 
-.navbar-links a:hover {
-  color: ;
+.left-nav a:hover {
+  background-color: #f0f0f0;
+  border-radius: 4px;
 }
 
+/* Main Content Layout */
 
+.app-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.main-content {
+  display: flex;
+  justify-content: space-between; /* Ensures space between left nav and right cart */
+  width: 100%; /* Make sure the content takes the full width */
+}
+
+.dashboard {
+  flex-grow: 1;
+  padding: 20px;
+  background-color: #f7f7f7;
+  margin-right: 20px; /* Add space between the dashboard and the cart */
+}
+
+/* Right Cart */
+
+.right-cart {
+  width: 300px;
+  background-color: #fff;
+  padding: 20px;
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+  position: relative;
+  align-self: flex-end; /* Aligns the cart to the right side of the page */
+  margin-right: 20px; /* Ensures there is a gap on the right */
+}
 
