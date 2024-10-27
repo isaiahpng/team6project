@@ -3,22 +3,29 @@ import './App.css';
 import TopNav from './TopNav';
 import LeftNav from './LeftNav';
 import RightCart from './RightCart';
+import InventoryDashboard from './InventoryDash';
 
 function App() {
-  return (
-    <div className="app-container">
-      <TopNav />
-      <div className="main-content">
-        <LeftNav />
-        <div className="dashboard">
-          {/* Dashboard content goes here */}
-          <h1>Dashboard</h1>
-          <p>This is where all the available merchandise will be displayed.</p>
+    const [cart, setCart] = useState([]); // Initialize cart state
+
+    const addToCart = (item) => {
+        // Function to add an item to the cart
+        setCart((prevCart) => [...prevCart, item]);
+    };
+
+    return (
+        <div className="app-container">
+            <TopNav />
+            <div className="main-content">
+                <LeftNav />
+                <div className="dashboard">
+                    <h1>Dashboard</h1>
+                    <InventoryDashboard addToCart={addToCart} /> {/* Pass the addToCart function */}
+                </div>
+                <RightCart cart={cart} setCart={setCart} /> {/* Pass cart state and setter */}
+            </div>
         </div>
-        <RightCart />
-      </div>
-    </div>
-  );
+    );
 }
 
 export default App;

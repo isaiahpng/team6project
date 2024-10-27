@@ -2,35 +2,58 @@
 import React, { useState } from 'react';
 import './App.css';
 
-const RightCart = () => {
-  // Example cart data
-  const [cart, setCart] = useState([
-    { id: 1, name: 'Vegetable Burger', price: 25 },
-    { id: 2, name: 'Meat Burger', price: 28 },
-    { id: 3, name: 'Cheese Burger', price: 32 },
-  ]);
+const RightCart = ({ cart, setCart }) => {
+  const [hoveredItem, setHoveredItem] = useState(null);
 
   // Calculate total
-  const totalPrice = cart.reduce((total, item) => total + item.price, 0);
+  const totalPrice = cart.reduce((total, item) => total + item.Price, 0);
 
-  const placeOrder = () => {
-    // Logic to place the order and update inventory
-    alert('Order placed successfully!');
-    setCart([]); // Clear cart after order is placed
+  const placeOrder = async () => {
+    try {
+      const response = await fetch('http://localhost:3001/api/order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(cart), // Convert cart items to JSON
+      });
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      alert('Order placed successfully!');
+      setCart([]); // Clear cart after order is placed
+    } catch (error) {
+      console.error('Error placing order:', error);
+      alert('Failed to place the order. Please try again.');
+    }
+  };
+
+  const removeFromCart = (itemToRemove) => {
+    setCart((prevCart) => prevCart.filter(item => item.ProductID !== itemToRemove.ProductID));
   };
 
   return (
     <div className="right-cart">
       <h3>Your Cart</h3>
-      <ul>
-        {cart.map(item => (
-          <li key={item.id}>
-            {item.name} - ${item.price}
-          </li>
-        ))}
-      </ul>
+      <div>
+        {cart.length === 0 ? (
+          <p>Your cart is empty.</p> // Message when cart is empty
+        ) : (
+          cart.map(item => (
+            <div className="cart-item" key={item.ProductID} onMouseEnter={() => setHoveredItem(item)} onMouseLeave={() => setHoveredItem(null)}>
+              <span>{item.ProductName}</span>
+              <span>${item.Price.toFixed(2)}</span>
+              {hoveredItem === item && (
+                <span className="remove-hover" onClick={() => removeFromCart(item)}>Remove</span>
+              )}
+            </div>
+          ))
+        )}
+      </div>
       <div className="cart-total">
-        <p>Subtotal: ${totalPrice}</p>
+        <p>Subtotal: ${totalPrice.toFixed(2)}</p>
         <button onClick={placeOrder}>Place Order</button>
       </div>
     </div>
@@ -38,3 +61,4 @@ const RightCart = () => {
 };
 
 export default RightCart;
+

@@ -6,7 +6,7 @@ const TopNav = () => {
   return (
     <div className="top-nav">
       <div className="search-filter">
-        <input type="text" placeholder="Search food..." />
+        <input type="text" placeholder="Search items..." />
         <button>Filter</button>
       </div>
       <div className="user-info">

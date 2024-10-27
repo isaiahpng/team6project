@@ -1,12 +1,13 @@
 const express = require('express');
 const mysql = require('mysql');
-const cors = require('cors'); 
+const cors = require('cors');
 
 const app = express();
 const port = 3001;
 
 // Use CORS middleware
 app.use(cors());
+app.use(express.json()); // Add this line to parse JSON requests
 
 const db = mysql.createConnection({
   host: '2024team6ds.mysql.database.azure.com',
@@ -27,45 +28,50 @@ db.connect(err => {
   console.log('Connected to MySQL database!');
 });
 
-// existing routes...
-
-app.get('/api/schema', (req, res) => {
-  console.log('Received request for schema');
-  db.query('SHOW TABLES', (err, tables) => {
+// Route to fetch inventory data
+app.get('/api/inventory', (req, res) => {
+  const query = 'SELECT * FROM inventory'; // Replace 'inventory' with your actual table name
+  db.query(query, (err, results) => {
     if (err) {
-      console.error('Error fetching tables:', err.stack);
-      return res.status(500).send('Error fetching tables');
+      console.error('Error fetching inventory data:', err.stack);
+      res.status(500).send('Error fetching inventory data');
+      return;
     }
-
-    console.log('Tables found:', tables); // Log tables to check the structure
-
-    const tableSchemas = [];
-
-    const tableQueries = tables.map(table => {
-      const tableName = Object.values(table)[0]; // Get the table name
-      console.log('Table Name:', tableName); // Log the table name
-
-      return new Promise((resolve) => {
-        db.query(`DESCRIBE ${tableName}`, (err, schema) => {
-          if (err) {
-            console.error(`Error fetching schema for table ${tableName}:`, err.stack);
-            return resolve(null);
-          }
-          tableSchemas.push({ table: tableName, schema });
-          resolve();
-        });
-      });
-    });
-
-    Promise.all(tableQueries).then(() => {
-      console.log('Schema fetched:', tableSchemas);
-      res.json(tableSchemas);
-    });
+    res.json(results);
   });
 });
 
+// New route for placing an order and updating inventory
+app.post('/api/order', (req, res) => {
+  const cartItems = req.body; // Get cart items from the request body
+
+  // Prepare SQL queries to update inventory quantities
+  const queries = cartItems.map(item => {
+    return new Promise((resolve, reject) => {
+      const sql = 'UPDATE inventory SET InventoryQuantity = InventoryQuantity - 1 WHERE ProductID = ?'; // Decrement by 1
+      db.query(sql, [item.ProductID], (err, result) => {
+        if (err) {
+          console.error(`Error updating inventory for ProductID ${item.ProductID}:`, err.stack);
+          return reject(err);
+        }
+        resolve(result);
+      });
+    });
+  });
+
+  // Execute all queries
+  Promise.all(queries)
+    .then(() => {
+      res.status(200).send('Order placed and inventory updated successfully.');
+    })
+    .catch(err => {
+      console.error('Error updating inventory:', err);
+      res.status(500).send('Error placing order.');
+    });
+});
 
 // Start the server
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
 });
+

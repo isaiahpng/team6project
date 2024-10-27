@@ -63,7 +63,6 @@
 }
 
 /* Main Content Layout */
-
 .app-container {
   display: flex;
   flex-direction: column;
@@ -83,14 +82,85 @@
 }
 
 /* Right Cart */
-
 .right-cart {
-  width: 300px;
-  background-color: #fff;
-  padding: 20px;
-  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
-  position: relative;
-  align-self: flex-end; /* Aligns the cart to the right side of the page */
-  margin-right: 20px; /* Ensures there is a gap on the right */
+  background-color: #f7f7f7;; /* Light background color for the cart */
+  padding: 20px; /* Padding inside the cart */
+  width: 300px; /* Fixed width for the cart */
+  margin-top: 20px;
+  border-radius: 10px;
 }
+
+.right-cart h3 {
+  margin-top: 0; /* Remove margin from the top of the heading */
+}
+
+.cart-item {
+  display: flex; /* Use flexbox for layout */
+  justify-content: space-between; /* Space between item name and price */
+  padding: 10px; /* Padding inside each item box */
+  border: 1px solid #ccc; /* Border for each item box */
+  border-radius: 5px; /* Rounded corners for item boxes */
+  margin-bottom: 10px; /* Space between items */
+  background-color: #fff; /* White background for item boxes */
+}
+
+.cart-item:last-child {
+  margin-bottom: 0; /* Remove margin from the last item */
+}
+
+.cart-total {
+  font-weight: bold; /* Make total font bold */
+  margin-top: 10px; /* Space above total */
+}
+
+.remove-button {
+  background-color: #ff4d4d; /* Red background for the remove button */
+  color: white; /* White text color */
+  border: none; /* No border */
+  border-radius: 5px; /* Rounded corners */
+  padding: 5px 10px; /* Padding for the button */
+  cursor: pointer; /* Pointer cursor on hover */
+}
+
+.remove-button:hover {
+  background-color: #ff1a1a; /* Darker red on hover */
+}
+
+/* InventoryDash */
+.inventory-container {
+  display: grid; /* Use grid layout */
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); /* Responsive grid */
+  gap: 20px; /* Space between grid items */
+  padding: 20px; /* Padding around the container */
+}
+
+.inventory-item {
+  background-color: #f9f9f9; /* Light background color */
+  border: 1px solid #ddd; /* Border for the item */
+  border-radius: 8px; /* Rounded corners */
+  overflow: hidden; /* Hide overflow */
+  text-align: center; /* Center text */
+  transition: transform 0.2s; /* Smooth transition for hover effect */
+}
+
+.inventory-item:hover {
+  transform: scale(1.05); /* Slightly enlarge item on hover */
+}
+
+.product-image {
+  width: 100%; /* Full width */
+  height: auto; /* Maintain aspect ratio */
+  max-height: 150px; /* Limit height for images */
+}
+
+.product-name {
+  font-size: 1.2em; /* Larger font size for product name */
+  margin: 10px 0; /* Margin around product name */
+}
+
+.product-price {
+  color: #333; /* Dark color for price */
+  font-weight: bold; /* Bold price */
+}
+
 
