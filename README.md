@@ -1,7 +1,7 @@
 # Team 6 Point of Sale System
 
 ### These steps only need to be done once, install Node.js and then run in the terminal (command prompt):
-1. `cd team6project` directory
+1. Navigate to the project directory ex. `cd team6project`
 2. `npm install -g npm`
 3. `npm install express`
 4. `npm install mysql` 
