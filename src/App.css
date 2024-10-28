@@ -31,6 +31,89 @@
   border-radius: 4px;
 }
 
+.top-nav .login-button {
+  background-color: #007bff;
+  color: white;
+  padding: 10px 15px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.top-nav .login-button:hover {
+  background-color: #0056b3; /* Slightly darker blue */
+}
+
+.welcome-message {
+  font-weight: bold;  /* Makes the text bold */
+  text-align: center;   /* Aligns text to the left */
+  margin-right: 10px;   /* Adjust margin to move it closer to the left */
+  font-size: 1.5em;   /* You can adjust the size as needed */
+}
+
+/* Modal styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5); /* Blurred background */
+  backdrop-filter: blur(5px); /* Blur effect */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.login-modal {
+  background-color: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  text-align: center;
+}
+
+.login-modal h2 {
+  margin-bottom: 15px;
+}
+
+.login-modal input {
+  display: block;
+  margin: 10px auto;
+  padding: 10px;
+  width: 80%;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.login-modal button {
+  margin: 5px;
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.login-modal button:hover {
+  background-color: #0056b3;
+}
+
+.login-modal .close-button {
+  background-color: #dc3545;
+}
+
+.login-modal .close-button:hover {
+  background-color: #c82333;
+}
+
+.error-message {
+  color: red;
+  margin-bottom: 10px;
+}
+
 /* Left Navbar */
 
 .left-nav {

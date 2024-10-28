@@ -28,6 +28,31 @@ db.connect(err => {
   console.log('Connected to MySQL database!');
 });
 
+// Route to handle login
+app.post('/api/login', (req, res) => {
+  const { username, password } = req.body;
+
+  const query = 'SELECT * FROM users WHERE UserName = ?';
+  db.query(query, [username], (err, results) => {
+    if (err) {
+      console.error('Error fetching user:', err.stack);
+      return res.status(500).json({ message: 'An error occurred' });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const user = results[0];
+    // Check if password matches (using plain-text password)
+    if (user.Password === password) {
+      return res.status(200).json({ username: user.UserName });
+    } else {
+      return res.status(401).json({ message: 'Invalid password' });
+    }
+  });
+});
+
 // Route to fetch inventory data
 app.get('/api/inventory', (req, res) => {
   const query = 'SELECT * FROM inventory'; // Replace 'inventory' with your actual table name

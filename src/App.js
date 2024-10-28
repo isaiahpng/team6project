@@ -6,16 +6,28 @@ import RightCart from './RightCart';
 import InventoryDashboard from './InventoryDash';
 
 function App() {
-    const [cart, setCart] = useState([]); // Initialize cart state
+    const [cart, setCart] = useState([]); // State for cart
+    const [user, setUser] = useState(null); // State for logged-in user
 
     const addToCart = (item) => {
         // Function to add an item to the cart
         setCart((prevCart) => [...prevCart, item]);
     };
 
+    const handleLogin = (username) => {
+        // Function to handle user login
+        setUser(username);
+    };
+
+    const handleLogout = () => {
+        // Function to handle user logout
+        setUser(null);
+        setCart([]); // Optionally clear the cart when the user logs out
+    };
+
     return (
         <div className="app-container">
-            <TopNav />
+            <TopNav user={user} onLogin={handleLogin} onLogout={handleLogout} /> {/* Pass user, onLogin, and onLogout */}
             <div className="main-content">
                 <LeftNav />
                 <div className="dashboard">
@@ -29,4 +41,5 @@ function App() {
 }
 
 export default App;
+
 
