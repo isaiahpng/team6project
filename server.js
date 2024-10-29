@@ -95,6 +95,16 @@ app.post('/api/order', (req, res) => {
     });
 });
 
+//Route for inventory data
+app.get('/api/inventory', async (req, res) => {
+  try {
+      const inventory = await db.query('SELECT * FROM inventory');
+      res.json(inventory);
+  } catch (error) {
+      res.status(500).json({ error: 'Error fetching inventory data' });
+  }
+});
+
 // Start the server
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
