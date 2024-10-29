@@ -8,6 +8,8 @@ const port = 3001;
 // Use CORS middleware
 app.use(cors());
 app.use(express.json()); // Add this line to parse JSON requests
+app.use(cors({ origin: 'https://team6possystem.netlify.app/' }));
+
 
 const db = mysql.createConnection({
   host: '2024team6ds.mysql.database.azure.com',
