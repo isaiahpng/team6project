@@ -31,8 +31,8 @@ function App() {
             case 'Dashboard':
                 return <InventoryDashboard addToCart={addToCart} />;
             case 'Order History':
-                return <OrderHistory />;
-            case 'Inventory':
+                return <OrderHistory user={user} />; // Pass user prop to OrderHistory
+                case 'Inventory':
                 return <Inventory user={user} />; // Pass user prop to Inventory
             default:
                 return <InventoryDashboard addToCart={addToCart} />;

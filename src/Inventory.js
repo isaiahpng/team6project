@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import './App.css'; // Make sure to import your styles
 
-const Inventory = ({ user }) => {
+const InventoryDashboard = ({ addToCart }) => {
     const [inventory, setInventory] = useState([]);
+    const [sortOption, setSortOption] = useState('quantityAsc'); // Default sort option
 
     useEffect(() => {
         // Fetch inventory data from the backend
@@ -21,29 +21,59 @@ const Inventory = ({ user }) => {
             });
     }, []);
 
-    // Check if user is logged in
-    if (!user) {
-        return <div>Please log in to view the inventory.</div>; // Show message for non-logged-in users
-    }
+    // Function to sort inventory based on selected option
+    const sortInventory = () => {
+        let sortedInventory = [...inventory];
+        switch (sortOption) {
+            case 'quantityAsc':
+                sortedInventory.sort((a, b) => a.InventoryQuantity - b.InventoryQuantity);
+                break;
+            case 'quantityDesc':
+                sortedInventory.sort((a, b) => b.InventoryQuantity - a.InventoryQuantity);
+                break;
+            case 'priceAsc':
+                sortedInventory.sort((a, b) => a.Price - b.Price);
+                break;
+            case 'priceDesc':
+                sortedInventory.sort((a, b) => b.Price - a.Price);
+                break;
+            default:
+                break;
+        }
+        return sortedInventory;
+    };
+
+    // Get sorted inventory
+    const sortedInventory = sortInventory();
 
     return (
         <div className="inventory-container">
-            {inventory.map(item => (
-                <div className="inventory-item" key={item.ProductID}>
-                    {/* <img src={item.imageUrl} alt={item.ProductName} className="product-image" /> */} {/* Implementing Pictures Later */}
+            <div className="sort-controls">
+                <label htmlFor="sort">Sort by: </label>
+                <select
+                    id="sort"
+                    value={sortOption}
+                    onChange={(e) => setSortOption(e.target.value)}
+                >
+                    <option value="quantityAsc">Quantity: Low to High</option>
+                    <option value="quantityDesc">Quantity: High to Low</option>
+                    <option value="priceAsc">Price: Low to High</option>
+                    <option value="priceDesc">Price: High to Low</option>
+                </select>
+            </div>
+
+            {sortedInventory.map(item => (
+                <div className="inventory-item" key={item.ProductID} onClick={() => addToCart(item)}>
                     <h3 className="product-name">{item.ProductName}</h3>
-                    <p className="product-price">${item.Price ? item.Price.toFixed(2) : '0.00'}</p>
-                    <p className="inventory-quantity">
-                        In Stock: {item.InventoryQuantity}
-                        {/* Display low stock warning if inventory is below 50 */}
-                        {item.InventoryQuantity < 30 && (
-                            <span className="low-stock-warning"> (Low Stock!)</span>
-                        )}
-                    </p>
+                    <p className="product-price">${item.Price.toFixed(2)}</p>
+                    {item.InventoryQuantity < 20 && (
+                        <p className="low-stock-warning" style={{ color: 'red' }}>Low Stock</p>
+                    )}
                 </div>
             ))}
         </div>
     );
 };
 
-export default Inventory;
+export default InventoryDashboard;
+

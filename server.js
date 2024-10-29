@@ -105,6 +105,19 @@ app.get('/api/inventory', async (req, res) => {
   }
 });
 
+// Route to fetch order history data
+app.get('/api/orders', (req, res) => {
+  const query = 'SELECT * FROM orders'; // Adjust this to only get user's orders if needed
+  db.query(query, (err, results) => {
+      if (err) {
+          console.error('Error fetching order history data:', err.stack);
+          res.status(500).send('Error fetching order history data');
+          return;
+      }
+      res.json(results);
+  });
+});
+
 // Start the server
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
