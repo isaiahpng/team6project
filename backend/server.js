@@ -1,14 +1,15 @@
 const express = require('express');
 const mysql = require('mysql');
 const cors = require('cors');
+require('dotenv').config();
 
 const app = express();
 const port = 3001;
 
+
 // Use CORS middleware
 app.use(cors());
 app.use(express.json()); // Add this line to parse JSON requests
-app.use(cors({ origin: 'https://team6possystem.netlify.app/' }));
 
 
 const db = mysql.createConnection({
