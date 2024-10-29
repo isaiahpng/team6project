@@ -32,7 +32,7 @@ function App() {
                 return <InventoryDashboard addToCart={addToCart} />;
             case 'Order History':
                 return <OrderHistory user={user} />; // Pass user prop to OrderHistory
-                case 'Inventory':
+            case 'Inventory':
                 return <Inventory user={user} />; // Pass user prop to Inventory
             default:
                 return <InventoryDashboard addToCart={addToCart} />;
@@ -47,7 +47,7 @@ function App() {
                 <div className="dashboard">
                     {renderPage()}
                 </div>
-                <RightCart cart={cart} setCart={setCart} />
+                <RightCart cart={cart} setCart={setCart} user={user} /> {/* Pass user here */}
             </div>
         </div>
     );

@@ -61,4 +61,3 @@ const RightCart = ({ cart, setCart }) => {
 };
 
 export default RightCart;
-

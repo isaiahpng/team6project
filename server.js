@@ -118,6 +118,18 @@ app.get('/api/orders', (req, res) => {
   });
 });
 
+// New route to fetch the last ShoppingCartID
+app.get('/api/last-shopping-cart-id', (req, res) => {
+  const query = 'SELECT MAX(ShoppingCartID) AS lastShoppingCartId FROM orders';
+  db.query(query, (err, results) => {
+      if (err) {
+          console.error('Error fetching last ShoppingCartID:', err.stack);
+          return res.status(500).json({ message: 'Error fetching last ShoppingCartID' });
+      }
+      res.json({ lastShoppingCartId: results[0].lastShoppingCartId || 0 });
+  });
+});
+
 // Start the server
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
