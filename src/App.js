@@ -4,42 +4,54 @@ import TopNav from './TopNav';
 import LeftNav from './LeftNav';
 import RightCart from './RightCart';
 import InventoryDashboard from './InventoryDash';
+import OrderHistory from './OrderHistory';
+import Inventory from './Inventory';
 
 function App() {
     const [cart, setCart] = useState([]); // State for cart
     const [user, setUser] = useState(null); // State for logged-in user
+    const [activePage, setActivePage] = useState('Dashboard'); // State to track active page
 
     const addToCart = (item) => {
-        // Function to add an item to the cart
         setCart((prevCart) => [...prevCart, item]);
     };
 
     const handleLogin = (username) => {
-        // Function to handle user login
         setUser(username);
     };
 
     const handleLogout = () => {
-        // Function to handle user logout
         setUser(null);
         setCart([]); // Optionally clear the cart when the user logs out
     };
 
+    // Function to render the active page component
+    const renderPage = () => {
+        switch (activePage) {
+            case 'Dashboard':
+                return <InventoryDashboard addToCart={addToCart} />;
+            case 'Order History':
+                return <OrderHistory />;
+            case 'Inventory':
+                return <Inventory />;
+            default:
+                return <InventoryDashboard addToCart={addToCart} />;
+        }
+    };
+
     return (
         <div className="app-container">
-            <TopNav user={user} onLogin={handleLogin} onLogout={handleLogout} /> {/* Pass user, onLogin, and onLogout */}
+            <TopNav user={user} onLogin={handleLogin} onLogout={handleLogout} />
             <div className="main-content">
-                <LeftNav />
+                <LeftNav setActivePage={setActivePage} /> {/* Pass setActivePage to LeftNav */}
                 <div className="dashboard">
-                    <h1>Dashboard</h1>
-                    <InventoryDashboard addToCart={addToCart} /> {/* Pass the addToCart function */}
+                    {renderPage()}
                 </div>
-                <RightCart cart={cart} setCart={setCart} /> {/* Pass cart state and setter */}
+                <RightCart cart={cart} setCart={setCart} />
             </div>
         </div>
     );
 }
 
 export default App;
-
 

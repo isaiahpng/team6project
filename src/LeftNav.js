@@ -1,17 +1,17 @@
-// LeftNav.js
 import React from 'react';
 import './App.css';
 
-const LeftNav = () => {
+const LeftNav = ({ setActivePage }) => {
   return (
     <div className="left-nav">
       <ul>
-        <li><a href="/">Dashboard</a></li>
-        <li><a href="/order-history">Order History</a></li>
-        <li><a href="/inventory">Inventory</a></li>
+        <li><a onClick={() => setActivePage('Dashboard')}>Dashboard</a></li>
+        <li><a onClick={() => setActivePage('Order History')}>Order History</a></li>
+        <li><a onClick={() => setActivePage('Inventory')}>Inventory</a></li>
       </ul>
     </div>
   );
 };
 
 export default LeftNav;
+
