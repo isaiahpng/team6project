@@ -7,7 +7,7 @@ const OrderHistory = ({ user }) => {
     useEffect(() => {
         if (user) {
             // Fetch order history data for the logged-in user
-            fetch(`http://localhost:3001/api/orders?userId=${user.UserID}`)
+            fetch(`https://team6project.onrender.com/api/orders?userId=${user.UserID}`)
                 .then(response => {
                     if (!response.ok) {
                         throw new Error('Network response was not ok');

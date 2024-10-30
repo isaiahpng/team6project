@@ -10,7 +10,7 @@ const RightCart = ({ cart, setCart }) => {
 
   const placeOrder = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/order', {
+      const response = await fetch('https://team6project.onrender.com/api/order', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -41,7 +41,7 @@ const TopNav = ({ user, onLogin, onLogout }) => {
     return (
         <div className="top-nav">
             <div className="pos-title">
-                <h1>POS System</h1> {/* Large title for POS System */}
+                <h1>POS System</h1>
             </div>
             <div className="user-info">
                 {user ? (

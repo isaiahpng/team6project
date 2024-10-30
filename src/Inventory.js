@@ -6,7 +6,7 @@ const InventoryDashboard = ({ addToCart }) => {
 
     useEffect(() => {
         // Fetch inventory data from the backend
-        fetch('http://localhost:3001/api/inventory')
+        fetch('https://team6project.onrender.com/api/inventory')
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
