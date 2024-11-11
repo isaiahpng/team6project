@@ -1,0 +1,15 @@
+.login{
+    margin-top: 30px;
+    text-align: center;
+}
+
+.login .btn.btn-success{
+    width: 50%;
+}
+
+.addUser h3{
+    text-align: center;
+    font-weight: bold;
+    color: darkcyan;
+    text-transform: uppercase;
+}

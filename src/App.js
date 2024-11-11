@@ -4,8 +4,22 @@ import TopNav from './TopNav';
 import LeftNav from './LeftNav';
 import RightCart from './RightCart';
 import InventoryDashboard from './InventoryDash';
+import Signup from './signup/Signup';
+import { RouterProvider, createBrowserRouter } from 'react-router-dom';
+import Login from './login/login';
 
 function App() {
+    const route = createBrowserRouter([
+        {
+          path: "/",
+          element: <Signup />,
+        },
+        {
+          path: "/login",
+          element: <Login />,
+        },
+      ])
+      
     const [cart, setCart] = useState([]); // State for cart
     const [user, setUser] = useState(null); // State for logged-in user
 
