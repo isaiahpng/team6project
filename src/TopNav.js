@@ -15,9 +15,8 @@ const TopNav = ({ user, onLogin, onLogout }) => {
 
     return (
         <div className="top-nav">
-            <div className="search-filter">
-                <input type="text" placeholder="Search items..." />
-                <button>Filter</button>
+            <div className="pos-title">
+                <h1>POS System</h1> {/* Large title for POS System */}
             </div>
             <div className="user-info">
                 {user ? (
@@ -35,5 +34,3 @@ const TopNav = ({ user, onLogin, onLogout }) => {
 };
 
 export default TopNav;
-
-

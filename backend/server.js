@@ -1,13 +1,16 @@
 const express = require('express');
 const mysql = require('mysql');
 const cors = require('cors');
+require('dotenv').config();
 
 const app = express();
 const port = 3001;
 
+
 // Use CORS middleware
 app.use(cors());
 app.use(express.json()); // Add this line to parse JSON requests
+
 
 const db = mysql.createConnection({
   host: '2024team6ds.mysql.database.azure.com',
@@ -95,8 +98,43 @@ app.post('/api/order', (req, res) => {
     });
 });
 
+//Route for inventory data
+app.get('/api/inventory', async (req, res) => {
+  try {
+      const inventory = await db.query('SELECT * FROM inventory');
+      res.json(inventory);
+  } catch (error) {
+      res.status(500).json({ error: 'Error fetching inventory data' });
+  }
+});
+
+// Route to fetch order history data
+app.get('/api/orders', (req, res) => {
+  const query = 'SELECT * FROM orders'; // Adjust this to only get user's orders if needed
+  db.query(query, (err, results) => {
+      if (err) {
+          console.error('Error fetching order history data:', err.stack);
+          res.status(500).send('Error fetching order history data');
+          return;
+      }
+      res.json(results);
+  });
+});
+
+// New route to fetch the last ShoppingCartID
+app.get('/api/last-shopping-cart-id', (req, res) => {
+  const query = 'SELECT MAX(ShoppingCartID) AS lastShoppingCartId FROM orders';
+  db.query(query, (err, results) => {
+      if (err) {
+          console.error('Error fetching last ShoppingCartID:', err.stack);
+          return res.status(500).json({ message: 'Error fetching last ShoppingCartID' });
+      }
+      res.json({ lastShoppingCartId: results[0].lastShoppingCartId || 0 });
+  });
+});
+
 // Start the server
 app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`);
+  console.log(`Server running at https://team6project.onrender.com`);
 });
 
