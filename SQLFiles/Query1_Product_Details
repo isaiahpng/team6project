@@ -1,0 +1,16 @@
+DROP procedure if exists getProductDetails;
+DELIMITER // 
+
+CREATE PROCEDURE getProductDetails(inputID INT) 
+BEGIN 
+
+DECLARE inputIDVariable int;
+SET inputIDVariable = inputID;
+
+SELECT ProductID, ProductName, Price, ProductDescription, Tag
+FROM Inventory inv
+WHERE inv.ProductID = inputIDVariable;
+ 
+END // DELIMITER ;
+
+call getProductDetails(1000);
