@@ -13,4 +13,4 @@ WHERE inv.ProductID = inputIDVariable;
  
 END // DELIMITER ;
 
-call getProductDetails(1000);
+call getProductDetails(inputID);
