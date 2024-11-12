@@ -11,7 +11,7 @@ import Login from './login/login';
 function App() {
     const route = createBrowserRouter([
         {
-          path: "/",
+          path: "/signup",
           element: <Signup />,
         },
         {
@@ -19,7 +19,7 @@ function App() {
           element: <Login />,
         },
       ])
-      
+
     const [cart, setCart] = useState([]); // State for cart
     const [user, setUser] = useState(null); // State for logged-in user
 
@@ -47,6 +47,8 @@ function App() {
                 <div className="dashboard">
                     <h1>Dashboard</h1>
                     <InventoryDashboard addToCart={addToCart} /> {/* Pass the addToCart function */}
+                    <RouterProvider router={route}></RouterProvider>
+                    
                 </div>
                 <RightCart cart={cart} setCart={setCart} /> {/* Pass cart state and setter */}
             </div>

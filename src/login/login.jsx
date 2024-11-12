@@ -28,9 +28,9 @@ const Login = () => {
 
                 </div>
             </form>
-            <div className= "login">
+            <div className= "signup">
                 <p>Don't have an account? </p>
-                <Link type="submit" class="btn btn-success">Sign Up</Link>
+                <Link to="/signup" type="submit" class="btn btn-success">Sign Up</Link>
 
             </div>
         </div>
