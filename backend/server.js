@@ -49,7 +49,11 @@ app.post('/api/login', (req, res) => {
     const user = results[0];
     // Check if password matches (using plain-text password)
     if (user.Password === password) {
-      return res.status(200).json({ username: user.UserName });
+      // Return the user data along with role info
+      return res.status(200).json({ 
+        username: user.UserName,
+        isAdmin: user.isAdmin === 1, // Send true if admin, false otherwise
+      });
     } else {
       return res.status(401).json({ message: 'Invalid password' });
     }
@@ -138,3 +142,56 @@ app.listen(port, () => {
   console.log(`Server running at https://team6project.onrender.com`);
 });
 
+// Example endpoint to get UserID
+app.get('/api/getUserId', async (req, res) => {
+  const { username } = req.query;
+  const query = 'SELECT UserID FROM Users WHERE Username = ?';
+  const [rows] = await db.execute(query, [username]);
+  if (rows.length > 0) {
+    res.json({ UserID: rows[0].UserID });
+  } else {
+    res.status(404).json({ message: 'User not found' });
+  }
+});
+
+// Example endpoint to get ShoppingCartID for a user
+app.get('/api/getShoppingCartId', async (req, res) => {
+  const { userId } = req.query;
+  const query = 'SELECT ShoppingCartID FROM Orders WHERE UserID = ? LIMIT 1';
+  const [rows] = await db.execute(query, [userId]);
+  if (rows.length > 0) {
+    res.json({ ShoppingCartID: rows[0].ShoppingCartID });
+  } else {
+    res.json({ ShoppingCartID: null }); // Return null if no existing cart ID
+  }
+});
+
+aapp.post('/api/order', async (req, res) => {
+  const { UserID, OrderStatus, OrderDate, ShoppingCartID, CartItems } = req.body;
+
+  // Insert into Orders table without specifying OrderID
+  const query = `
+    INSERT INTO Orders (UserID, OrderStatus, OrderDate, ShoppingCartID)
+    VALUES (?, ?, ?, ?)
+  `;
+  
+  try {
+      const [result] = await db.execute(query, [UserID, OrderStatus, OrderDate, ShoppingCartID]);
+
+      // Retrieve the auto-generated OrderID if needed
+      const generatedOrderID = result.insertId;
+
+      // Insert each item in CartItems (optional, depending on your table structure)
+      for (const item of CartItems) {
+          await db.execute(`
+            INSERT INTO OrderItems (OrderID, ProductID, Quantity)
+            VALUES (?, ?, ?)
+          `, [generatedOrderID, item.ProductID, item.Quantity]);
+      }
+
+      res.status(201).json({ message: 'Order placed successfully' });
+  } catch (error) {
+      console.error('Error placing order:', error);
+      res.status(500).json({ message: 'Failed to place the order. Please try again.' });
+  }
+});
