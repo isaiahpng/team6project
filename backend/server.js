@@ -4,13 +4,11 @@ const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
-const port = 3001;
-
+const port = process.env.PORT || 3001; // Use environment variable or default to 3001
 
 // Use CORS middleware
 app.use(cors());
 app.use(express.json()); // Add this line to parse JSON requests
-
 
 const db = mysql.createConnection({
   host: '2024team6ds.mysql.database.azure.com',
@@ -18,12 +16,12 @@ const db = mysql.createConnection({
   password: 'mySQL4DS!',
   database: 'mydb',
   ssl: {
-    rejectUnauthorized: true // This can be set to false for local development, but not recommended for production
-  }
+    rejectUnauthorized: true, // For production, true is safer; set to false for local dev if needed
+  },
 });
 
 // Connect to MySQL
-db.connect(err => {
+db.connect((err) => {
   if (err) {
     console.error('Error connecting to the database:', err.stack);
     return;
@@ -34,7 +32,6 @@ db.connect(err => {
 // Route to handle login
 app.post('/api/login', (req, res) => {
   const { username, password } = req.body;
-
   const query = 'SELECT * FROM users WHERE UserName = ?';
   db.query(query, [username], (err, results) => {
     if (err) {
@@ -47,9 +44,11 @@ app.post('/api/login', (req, res) => {
     }
 
     const user = results[0];
-    // Check if password matches (using plain-text password)
     if (user.Password === password) {
-      return res.status(200).json({ username: user.UserName });
+      return res.status(200).json({ 
+        username: user.UserName,
+        isAdmin: user.isAdmin === 1,
+      });
     } else {
       return res.status(401).json({ message: 'Invalid password' });
     }
@@ -58,7 +57,7 @@ app.post('/api/login', (req, res) => {
 
 // Route to fetch inventory data
 app.get('/api/inventory', (req, res) => {
-  const query = 'SELECT * FROM inventory'; // Replace 'inventory' with your actual table name
+  const query = 'SELECT * FROM inventory';
   db.query(query, (err, results) => {
     if (err) {
       console.error('Error fetching inventory data:', err.stack);
@@ -69,14 +68,31 @@ app.get('/api/inventory', (req, res) => {
   });
 });
 
+// Route to add new inventory item
+app.post('/api/add-inventory', (req, res) => {
+  const { ProductName, ProductDescription, InventoryQuantity, Price, inventorycol, Tag, imageUrl } = req.body;
+
+  const query = `
+    INSERT INTO inventory (ProductName, ProductDescription, InventoryQuantity, Price, inventorycol, Tag, imageUrl) 
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `;
+  
+  db.query(query, [ProductName, ProductDescription, InventoryQuantity, Price, inventorycol, Tag, imageUrl], (err, results) => {
+    if (err) {
+      console.error('Error adding new inventory item:', err.stack);
+      return res.status(500).json({ message: 'Error adding new inventory item' });
+    }
+    res.status(201).json({ message: 'Inventory item added successfully' });
+  });
+});
+
 // New route for placing an order and updating inventory
 app.post('/api/order', (req, res) => {
-  const cartItems = req.body; // Get cart items from the request body
+  const cartItems = req.body;
 
-  // Prepare SQL queries to update inventory quantities
-  const queries = cartItems.map(item => {
+  const queries = cartItems.map((item) => {
     return new Promise((resolve, reject) => {
-      const sql = 'UPDATE inventory SET InventoryQuantity = InventoryQuantity - 1 WHERE ProductID = ?'; // Decrement by 1
+      const sql = 'UPDATE inventory SET InventoryQuantity = InventoryQuantity - 1 WHERE ProductID = ?';
       db.query(sql, [item.ProductID], (err, result) => {
         if (err) {
           console.error(`Error updating inventory for ProductID ${item.ProductID}:`, err.stack);
@@ -87,37 +103,26 @@ app.post('/api/order', (req, res) => {
     });
   });
 
-  // Execute all queries
   Promise.all(queries)
     .then(() => {
       res.status(200).send('Order placed and inventory updated successfully.');
     })
-    .catch(err => {
+    .catch((err) => {
       console.error('Error updating inventory:', err);
       res.status(500).send('Error placing order.');
     });
 });
 
-//Route for inventory data
-app.get('/api/inventory', async (req, res) => {
-  try {
-      const inventory = await db.query('SELECT * FROM inventory');
-      res.json(inventory);
-  } catch (error) {
-      res.status(500).json({ error: 'Error fetching inventory data' });
-  }
-});
-
 // Route to fetch order history data
 app.get('/api/orders', (req, res) => {
-  const query = 'SELECT * FROM orders'; // Adjust this to only get user's orders if needed
+  const query = 'SELECT * FROM orders';
   db.query(query, (err, results) => {
-      if (err) {
-          console.error('Error fetching order history data:', err.stack);
-          res.status(500).send('Error fetching order history data');
-          return;
-      }
-      res.json(results);
+    if (err) {
+      console.error('Error fetching order history data:', err.stack);
+      res.status(500).send('Error fetching order history data');
+      return;
+    }
+    res.json(results);
   });
 });
 
@@ -125,16 +130,15 @@ app.get('/api/orders', (req, res) => {
 app.get('/api/last-shopping-cart-id', (req, res) => {
   const query = 'SELECT MAX(ShoppingCartID) AS lastShoppingCartId FROM orders';
   db.query(query, (err, results) => {
-      if (err) {
-          console.error('Error fetching last ShoppingCartID:', err.stack);
-          return res.status(500).json({ message: 'Error fetching last ShoppingCartID' });
-      }
-      res.json({ lastShoppingCartId: results[0].lastShoppingCartId || 0 });
+    if (err) {
+      console.error('Error fetching last ShoppingCartID:', err.stack);
+      return res.status(500).json({ message: 'Error fetching last ShoppingCartID' });
+    }
+    res.json({ lastShoppingCartId: results[0].lastShoppingCartId || 0 });
   });
 });
 
 // Start the server
 app.listen(port, () => {
-  console.log(`Server running at https://team6project.onrender.com`);
+  console.log(`Server running at http://localhost:${port}`); // Added port info
 });
-
