@@ -4,11 +4,9 @@ import TopNav from './TopNav';
 import LeftNav from './LeftNav';
 import RightCart from './RightCart';
 import InventoryDashboard from './InventoryDash';
-import Signup from './signup/Signup';
-import Login from './login/login';
 import OrderHistory from './OrderHistory';
 import Inventory from './Inventory';
-import NewInventory from './NewInventory';
+import NewInventory from './NewInventory'; // Import the NewInventory component
 
 function App() {
     const [cart, setCart] = useState([]); // State for cart
@@ -26,7 +24,6 @@ function App() {
 
     // Handle user login
     const handleLogin = (username) => {
-        console.log("Logging in with username:", username);
         setUser(username);
     };
 
@@ -68,4 +65,5 @@ function App() {
 }
 
 export default App;
+
 
