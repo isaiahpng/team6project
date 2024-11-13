@@ -1,22 +1,23 @@
+// server.js
 const express = require('express');
 const mysql = require('mysql');
 const cors = require('cors');
-require('dotenv').config();
 
 const app = express();
-const port = process.env.PORT || 3001; // Use environment variable or default to 3001
+const port = 3001; // Set port to 3001 directly
 
-// Use CORS middleware
+// Middleware
 app.use(cors());
-app.use(express.json()); // Add this line to parse JSON requests
+app.use(express.json()); // Parses JSON requests
 
+// MySQL database connection with hard-coded credentials
 const db = mysql.createConnection({
   host: '2024team6ds.mysql.database.azure.com',
   user: 'serverAdminStepan',
   password: 'mySQL4DS!',
   database: 'mydb',
   ssl: {
-    rejectUnauthorized: true, // For production, true is safer; set to false for local dev if needed
+    rejectUnauthorized: true, // Set to true in production for security
   },
 });
 
@@ -86,7 +87,7 @@ app.post('/api/add-inventory', (req, res) => {
   });
 });
 
-// New route for placing an order and updating inventory
+// Route for placing an order and updating inventory
 app.post('/api/order', (req, res) => {
   const cartItems = req.body;
 
@@ -126,7 +127,7 @@ app.get('/api/orders', (req, res) => {
   });
 });
 
-// New route to fetch the last ShoppingCartID
+// Route to fetch the last ShoppingCartID
 app.get('/api/last-shopping-cart-id', (req, res) => {
   const query = 'SELECT MAX(ShoppingCartID) AS lastShoppingCartId FROM orders';
   db.query(query, (err, results) => {
@@ -140,5 +141,5 @@ app.get('/api/last-shopping-cart-id', (req, res) => {
 
 // Start the server
 app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`); // Added port info
+  console.log(`Server running at http://localhost:${port}`);
 });
