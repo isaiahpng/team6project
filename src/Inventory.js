@@ -64,6 +64,9 @@ const InventoryDashboard = ({ addToCart }) => {
 
             {sortedInventory.map(item => (
                 <div className="inventory-item" key={item.ProductID} onClick={() => addToCart(item)}>
+                    <div class="image-container">
+                        <img src={item.imageUrl} alt={item.ProductName} className="product-image" /> {/* Display product image */}
+                    </div>
                     <h3 className="product-name">{item.ProductName}</h3>
                     <p className="product-price">${item.Price.toFixed(2)}</p>
                     {item.InventoryQuantity < 20 && (
