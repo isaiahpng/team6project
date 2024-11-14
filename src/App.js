@@ -4,8 +4,11 @@ import TopNav from './TopNav';
 import LeftNav from './LeftNav';
 import RightCart from './RightCart';
 import InventoryDashboard from './InventoryDash';
+import Signup from './signup/Signup';
+import Login from './login/login';
 import OrderHistory from './OrderHistory';
 import Inventory from './Inventory';
+import NewInventory from './NewInventory'; // Import the NewInventory component
 
 function App() {
     const [cart, setCart] = useState([]); // State for cart
@@ -17,6 +20,7 @@ function App() {
     };
 
     const handleLogin = (username) => {
+        console.log("Logging in with username:", username); // Log login action
         setUser(username);
     };
 
@@ -34,6 +38,8 @@ function App() {
                 return <OrderHistory user={user} />; // Pass user prop to OrderHistory
             case 'Inventory':
                 return <Inventory user={user} />; // Pass user prop to Inventory
+            case 'New Inventory':
+                return <NewInventory />; // Render NewInventory form page
             default:
                 return <InventoryDashboard addToCart={addToCart} />;
         }
@@ -43,9 +49,10 @@ function App() {
         <div className="app-container">
             <TopNav user={user} onLogin={handleLogin} onLogout={handleLogout} />
             <div className="main-content">
-                <LeftNav setActivePage={setActivePage} /> {/* Pass setActivePage to LeftNav */}
+                <LeftNav setActivePage={setActivePage} user={user} /> {/* Pass setActivePage to LeftNav */}
                 <div className="dashboard">
-                    {renderPage()}
+                    <h1>{activePage}</h1> {/* Display the active page title */}
+                    {renderPage()} {/* Render the appropriate page based on activePage */}
                 </div>
                 <RightCart cart={cart} setCart={setCart} user={user} /> {/* Pass user here */}
             </div>
@@ -54,5 +61,3 @@ function App() {
 }
 
 export default App;
-
-
