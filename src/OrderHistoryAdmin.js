@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const OrderHistory = ({ user }) => {
+const OrderHistoryAdmin = ({ user }) => {
     const [orders, setOrders] = useState([]);
     const [sortOption, setSortOption] = useState('dateAsc'); // Default sort option
 
@@ -42,7 +42,6 @@ const OrderHistory = ({ user }) => {
     // Get sorted orders
     const sortedOrders = sortOrders();
     console.log("sortedOrders:", sortedOrders);
-
     return (
         <div className="order-history-container">
             <div className="sort-controls">
@@ -56,26 +55,36 @@ const OrderHistory = ({ user }) => {
                     <option value="dateDesc">Date: Newest to Oldest</option>
                 </select>
             </div>
-
             {sortedOrders.length === 0 ? (
-                <p>No orders found.</p>
-            ) : (
-                <div className="order-list">
+            <p>No orders found.</p>
+             ) : (
+            <table className="order-table">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>User ID</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th>Shopping Cart ID</th>
+                    </tr>
+                </thead>
+                <tbody>
                     {sortedOrders.map(order => (
-                        <div className="order-item" key={order.OrderID}>
-                            <p>Order ID: {order.OrderID}</p>
-                            <p>User ID: {order.UserID}</p>
-                            <p>Status: {order.OrderStatus}</p>
-                            <p>Date: {new Date(order.OrderDate).toLocaleString()}</p>
-                            <p>Shopping Cart ID: {order.ShoppingCartID}</p>
-                        </div>
+                        <tr key={order.OrderID}>
+                            <td>{order.OrderID}</td>
+                            <td>{order.UserID}</td>
+                            <td>{order.OrderStatus}</td>
+                            <td>{new Date(order.OrderDate).toLocaleString()}</td>
+                            <td>{order.ShoppingCartID}</td>
+                        </tr>
                     ))}
-                </div>
+                </tbody>
+            </table>
             )}
         </div>
     );
 };
 
-export default OrderHistory;
+export default OrderHistoryAdmin;
 
 
