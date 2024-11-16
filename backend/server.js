@@ -143,8 +143,6 @@ app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`); // Added port info
 });
 
-
-
 // Example endpoint to get UserID
 app.get('/api/getUserId', async (req, res) => {
   const { username } = req.query;
@@ -156,6 +154,7 @@ app.get('/api/getUserId', async (req, res) => {
     res.status(404).json({ message: 'User not found' });
   }
 });
+
 // Example endpoint to get ShoppingCartID for a user
 app.get('/api/getShoppingCartId', async (req, res) => {
   const { userId } = req.query;
@@ -167,6 +166,7 @@ app.get('/api/getShoppingCartId', async (req, res) => {
     res.json({ ShoppingCartID: null }); // Return null if no existing cart ID
   }
 });
+
 app.post('/api/order', async (req, res) => {
   const { UserID, OrderStatus, OrderDate, ShoppingCartID, CartItems } = req.body;
   // Insert into Orders table without specifying OrderID
