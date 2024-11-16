@@ -56,7 +56,6 @@ const NewInventory = () => {
       <input type="text" name="ProductDescription" value={product.ProductDescription} onChange={handleChange} placeholder="Product Description" />
       <input type="number" name="InventoryQuantity" value={product.InventoryQuantity} onChange={handleChange} placeholder="Quantity" required />
       <input type="number" name="Price" step="0.01" value={product.Price} onChange={handleChange} placeholder="Price" required />
-      <input type="text" name="inventorycol" value={product.inventorycol} onChange={handleChange} placeholder="Inventory Column" />
       <input type="text" name="Tag" value={product.Tag} onChange={handleChange} placeholder="Tag" />
       <input type="text" name="imageUrl" value={product.imageUrl} onChange={handleChange} placeholder="Image URL" />
       <button type="submit">Add Inventory</button>
