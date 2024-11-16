@@ -1,194 +1,322 @@
+// Required modules
 const express = require('express');
 const mysql = require('mysql');
-const cors = require('cors');
-require('dotenv').config();
+const bodyParser = require('body-parser');
 
+// Initialize Express app
 const app = express();
-const port = process.env.PORT || 3001; // Use environment variable or default to 3001
+app.use(bodyParser.json());
 
-// Use CORS middleware
-app.use(cors());
-app.use(express.json()); // Add this line to parse JSON requests
-
+// MySQL connection
 const db = mysql.createConnection({
-  host: '2024team6ds.mysql.database.azure.com',
-  user: 'serverAdminStepan',
-  password: 'mySQL4DS!',
-  database: 'mydb',
-  ssl: {
-    rejectUnauthorized: true, // For production, true is safer; set to false for local dev if needed
-  },
+    host: 'localhost',
+    user: 'your_username',
+    password: 'your_password',
+    database: 'mydb'
 });
 
 // Connect to MySQL
-db.connect((err) => {
-  if (err) {
-    console.error('Error connecting to the database:', err.stack);
-    return;
-  }
-  console.log('Connected to MySQL database!');
-});
-
-// Route to handle login
-app.post('/api/login', (req, res) => {
-  const { username, password , isAdmin} = req.body;
-  const query = 'SELECT * FROM users WHERE UserName = ?';
-  db.query(query, [username], (err, results) => {
+db.connect(err => {
     if (err) {
-      console.error('Error fetching user:', err.stack);
-      return res.status(500).json({ message: 'An error occurred' });
+        console.error('Database connection failed:', err.stack);
+        return;
     }
-
-    if (results.length === 0) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    const user = results[0];
-    if (user.Password === password) {
-      return res.status(200).json({ 
-        username: user.UserName,
-        isAdmin: user.isAdmin === 1,
-      });
-    } else {
-      return res.status(401).json({ message: 'Invalid password' });
-    }
-  });
+    console.log('Connected to database');
 });
 
-// Route to fetch inventory data
-app.get('/api/inventory', (req, res) => {
-  const query = 'SELECT * FROM inventory';
-  db.query(query, (err, results) => {
-    if (err) {
-      console.error('Error fetching inventory data:', err.stack);
-      res.status(500).send('Error fetching inventory data');
-      return;
-    }
-    res.json(results);
-  });
-});
+// Function to check inventory levels and send notifications for low stock
+async function checkLowStock() {
+    const lowStockThreshold = 10; // Define your low stock threshold
+    const query = `
+        SELECT ProductID, ProductName, InventoryQuantity 
+        FROM inventory 
+        WHERE InventoryQuantity < ?
+    `;
 
-// Route to add new inventory item
-app.post('/api/add-inventory', (req, res) => {
-  const { ProductName, ProductDescription, InventoryQuantity, Price, inventorycol, Tag, imageUrl } = req.body;
+    try {
+        const [lowStockItems] = await db.execute(query, [lowStockThreshold]);
 
-  const query = `
-    INSERT INTO inventory (ProductName, ProductDescription, InventoryQuantity, Price, inventorycol, Tag, imageUrl) 
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-  `;
-  
-  db.query(query, [ProductName, ProductDescription, InventoryQuantity, Price, inventorycol, Tag, imageUrl], (err, results) => {
-    if (err) {
-      console.error('Error adding new inventory item:', err.stack);
-      return res.status(500).json({ message: 'Error adding new inventory item' });
-    }
-    res.status(201).json({ message: 'Inventory item added successfully' });
-  });
-});
-
-// New route for placing an order and updating inventory
-app.post('/api/order', (req, res) => {
-  const cartItems = req.body;
-
-  const queries = cartItems.map((item) => {
-    return new Promise((resolve, reject) => {
-      const sql = 'UPDATE inventory SET InventoryQuantity = InventoryQuantity - 1 WHERE ProductID = ?';
-      db.query(sql, [item.ProductID], (err, result) => {
-        if (err) {
-          console.error(`Error updating inventory for ProductID ${item.ProductID}:`, err.stack);
-          return reject(err);
+        for (const item of lowStockItems) {
+            const notificationMessage = `Low stock alert: ${item.ProductName} (ID: ${item.ProductID}) - Only ${item.InventoryQuantity} left.`;
+            await db.execute(`
+                INSERT INTO notifications (UserID, Message, IsRead)
+                VALUES (?, ?, ?)
+            `, [null, notificationMessage, false]); // Assuming UserID is null for admin notifications
         }
-        resolve(result);
-      });
-    });
-  });
+    } catch (error) {
+        console.error('Error checking low stock:', error);
+    }
+}
 
-  Promise.all(queries)
-    .then(() => {
-      res.status(200).send('Order placed and inventory updated successfully.');
-    })
-    .catch((err) => {
-      console.error('Error updating inventory:', err);
-      res.status(500).send('Error placing order.');
+// Call the checkLowStock function periodically
+setInterval(checkLowStock, 3600000); // Check every hour (3600000 ms)
+
+// Customer Order History Query
+app.get('/api/customer/order-history/:userId', async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        const query = `
+            SELECT 
+                o.OrderID,
+                o.OrderDate,
+                i.ProductName,
+                oi.Quantity,
+                i.Price,
+                (oi.Quantity * i.Price) as SubTotal,
+                o.OrderStatus
+            FROM orders o
+            JOIN order_items oi ON o.OrderID = oi.OrderID
+            JOIN inventory i ON oi.ProductID = i.ProductID
+            WHERE o.UserID = ?
+            ORDER BY o.OrderDate DESC
+        `;
+
+        db.query(query, [userId], (err, results) => {
+            if (err) {
+                console.error('Error fetching customer order history:', err.stack);
+                res.status(500).json({ message: 'Error fetching order history' });
+                return;
+            }
+            res.json(results);
+        });
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// Admin Order History Report
+app.get('/api/admin/order-report', (req, res) => {
+    const query = `
+        SELECT 
+            o.OrderID,
+            u.UserName as CustomerName,
+            o.OrderDate,
+            GROUP_CONCAT(i.ProductName) as Products,
+            SUM(oi.Quantity * i.Price) as TotalAmount,
+            o.OrderStatus
+        FROM orders o
+        JOIN users u ON o.UserID = u.UserID
+        JOIN order_items oi ON o.OrderID = oi.OrderID
+        JOIN inventory i ON oi.ProductID = i.ProductID
+        GROUP BY o.OrderID
+        ORDER BY o.OrderDate DESC
+    `;
+
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error('Error fetching admin order report:', err.stack);
+            res.status(500).json({ message: 'Error fetching order report' });
+            return;
+        }
+        res.json(results);
     });
 });
 
-// Route to fetch order history data
-app.get('/api/orders', (req, res) => {
-  const query = 'SELECT * FROM orders';
-  db.query(query, (err, results) => {
-    if (err) {
-      console.error('Error fetching order history data:', err.stack);
-      res.status(500).send('Error fetching order history data');
-      return;
+// Add filtering capabilities for admin report
+app.get('/api/admin/order-report/filtered', (req, res) => {
+    const { startDate, endDate, customerName } = req.query;
+    
+    let query = `
+        SELECT 
+            o.OrderID,
+            u.UserName as CustomerName,
+            o.OrderDate,
+            GROUP_CONCAT(i.ProductName) as Products,
+            SUM(oi.Quantity * i.Price) as TotalAmount,
+            o.OrderStatus
+        FROM orders o
+        JOIN users u ON o.UserID = u.UserID
+        JOIN order_items oi ON o.OrderID = oi.OrderID
+        JOIN inventory i ON oi.ProductID = i.ProductID
+        WHERE 1=1
+    `;
+
+    const params = [];
+
+    if (startDate) {
+        query += ` AND o.OrderDate >= ?`;
+        params.push(startDate);
     }
-    res.json(results);
-  });
+    if (endDate) {
+        query += ` AND o.OrderDate <= ?`;
+        params.push(endDate);
+    }
+    if (customerName) {
+        query += ` AND u.UserName LIKE ?`;
+        params.push(`%${customerName}%`);
+    }
+
+    query += ` GROUP BY o.OrderID ORDER BY o.OrderDate DESC`;
+
+    db.query(query, params, (err, results) => {
+        if (err) {
+            console.error('Error fetching filtered order report:', err.stack);
+            res.status(500).json({ message: 'Error fetching filtered order report' });
+            return;
+        }
+        res.json(results);
+    });
 });
 
-// New route to fetch the last ShoppingCartID
-app.get('/api/last-shopping-cart-id', (req, res) => {
-  const query = 'SELECT MAX(ShoppingCartID) AS lastShoppingCartId FROM orders';
-  db.query(query, (err, results) => {
-    if (err) {
-      console.error('Error fetching last ShoppingCartID:', err.stack);
-      return res.status(500).json({ message: 'Error fetching last ShoppingCartID' });
+// Get order statistics
+app.get('/api/admin/order-stats', async (req, res) => {
+    try {
+        const query = `
+            SELECT 
+                COUNT(DISTINCT o.OrderID) as TotalOrders,
+                COUNT(DISTINCT o.UserID) as UniqueCustomers,
+                SUM(oi.Quantity * i.Price) as TotalRevenue,
+                AVG(oi.Quantity * i.Price) as AverageOrderValue
+            FROM orders o
+            JOIN order_items oi ON o.OrderID = oi.OrderID
+            JOIN inventory i ON oi.ProductID = i.ProductID
+        `;
+
+        const [stats] = await db.execute(query);
+        res.json(stats[0]);
+    } catch (error) {
+        console.error('Error fetching order statistics:', error);
+        res.status(500).json({ message: 'Error fetching order statistics' });
     }
-    res.json({ lastShoppingCartId: results[0].lastShoppingCartId || 0 });
-  });
+});
+
+// Payment endpoints
+app.post('/api/payments', async (req, res) => {
+    try {
+        const {
+            PaymentType,
+            PaymentAmount,
+            totalDiscount,
+            FinalAmount,
+            OrderID,
+            CustomerID,
+            DiscountID
+        } = req.body;
+
+        const query = `
+            INSERT INTO payments (
+                PaymentType, 
+                PaymentAmount, 
+                TotalDiscount, 
+                FinalAmount, 
+                PaymentDate,
+                OrderID, 
+                CustomerID, 
+                DiscountID
+            ) VALUES (?, ?, ?, ?, NOW(), ?, ?, ?)
+        `;
+
+        db.query(
+            query, 
+            [PaymentType, PaymentAmount, totalDiscount, FinalAmount, OrderID, CustomerID, DiscountID],
+            (err, results) => {
+                if (err) {
+                    console.error('Error creating payment:', err);
+                    return res.status(500).json({ message: 'Error creating payment' });
+                }
+                res.status(201).json({ 
+                    message: 'Payment created successfully',
+                    paymentId: results.insertId 
+                });
+            }
+        );
+    } catch (error) {
+        console.error('Server error:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// Loyalty Program Logic
+app.post('/api/purchase', async (req, res) => {
+    const { customerId, amount } = req.body;
+
+    try {
+        // Calculate points earned (e.g., 1 point per dollar spent)
+        const pointsEarned = Math.floor(amount); // Adjust the calculation as needed
+
+        // Update customer's total points
+        await db.execute(`
+            UPDATE customers 
+            SET total_points = total_points + ?
+            WHERE CustomerID = ?
+        `, [pointsEarned, customerId]);
+
+        // Assign loyalty tier based on total points
+        await assignLoyaltyTier(customerId);
+
+        res.status(201).json({ message: 'Purchase recorded and points earned', pointsEarned });
+    } catch (error) {
+        console.error('Error processing purchase:', error);
+        res.status(500).json({ message: 'Error processing purchase' });
+    }
+});
+
+// Function to assign loyalty tier based on total points
+async function assignLoyaltyTier(customerId) {
+    const [customer] = await db.execute(`
+        SELECT total_points FROM customers WHERE CustomerID = ?
+    `, [customerId]);
+
+    let tierName = 'Silver'; // Default tier
+    const totalPoints = customer.total_points;
+
+    if (totalPoints >= 1000) {
+        tierName = 'Platinum';
+    } else if (totalPoints >= 500) {
+        tierName = 'Gold';
+    }
+
+    // Update the customer's loyalty tier
+    await db.execute(`
+        UPDATE customers 
+        SET LoyaltyTier = ?
+        WHERE CustomerID = ?
+    `, [tierName, customerId]);
+}
+
+// Redeem Points
+app.post('/api/redeem', async (req, res) => {
+    const { customerId, pointsToRedeem, rewardDescription } = req.body;
+
+    try {
+        // Check if the customer has enough points
+        const [customer] = await db.execute(`
+            SELECT total_points, LoyaltyTier FROM customers WHERE CustomerID = ?
+        `, [customerId]);
+
+        if (customer.total_points < pointsToRedeem) {
+            return res.status(400).json({ message: 'Not enough loyalty points' });
+        }
+
+        // Deduct points from the customer's account
+        await db.execute(`
+            UPDATE customers 
+            SET total_points = total_points - ?
+            WHERE CustomerID = ?
+        `, [pointsToRedeem, customerId]);
+
+        // Record the redemption
+        await db.execute(`
+            INSERT INTO redemptions (CustomerID, PointsRedeemed, RewardDescription)
+            VALUES (?, ?, ?)
+        `, [customerId, pointsToRedeem, rewardDescription]);
+
+        // Apply discount based on loyalty tier
+        const [tier] = await db.execute(`
+            SELECT DiscountRate FROM loyalty_tiers WHERE TierName = ?
+        `, [customer.LoyaltyTier]);
+
+        const discountAmount = (pointsToRedeem * tier.DiscountRate) / 100; // Calculate discount based on points redeemed
+        res.status(201).json({ message: 'Points redeemed successfully', discountAmount });
+    } catch (error) {
+        console.error('Error processing redemption:', error);
+        res.status(500).json({ message: 'Error processing redemption' });
+    }
 });
 
 // Start the server
-app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`); // Added port info
-});
-
-// Example endpoint to get UserID
-app.get('/api/getUserId', async (req, res) => {
-  const { username } = req.query;
-  const query = 'SELECT UserID FROM Users WHERE Username = ?';
-  const [rows] = await db.execute(query, [username]);
-  if (rows.length > 0) {
-    res.json({ UserID: rows[0].UserID });
-  } else {
-    res.status(404).json({ message: 'User not found' });
-  }
-});
-
-// Example endpoint to get ShoppingCartID for a user
-app.get('/api/getShoppingCartId', async (req, res) => {
-  const { userId } = req.query;
-  const query = 'SELECT ShoppingCartID FROM Orders WHERE UserID = ? LIMIT 1';
-  const [rows] = await db.execute(query, [userId]);
-  if (rows.length > 0) {
-    res.json({ ShoppingCartID: rows[0].ShoppingCartID });
-  } else {
-    res.json({ ShoppingCartID: null }); // Return null if no existing cart ID
-  }
-});
-
-app.post('/api/order', async (req, res) => {
-  const { UserID, OrderStatus, OrderDate, ShoppingCartID, CartItems } = req.body;
-  // Insert into Orders table without specifying OrderID
-  const query = `
-    INSERT INTO Orders (UserID, OrderStatus, OrderDate, ShoppingCartID)
-    VALUES (?, ?, ?, ?)
-  `;
-  
-  try {
-      const [result] = await db.execute(query, [UserID, OrderStatus, OrderDate, ShoppingCartID]);
-      // Retrieve the auto-generated OrderID if needed
-      const generatedOrderID = result.insertId;
-      // Insert each item in CartItems (optional, depending on your table structure)
-      for (const item of CartItems) {
-          await db.execute(`
-            INSERT INTO OrderItems (OrderID, ProductID, Quantity)
-            VALUES (?, ?, ?)
-          `, [generatedOrderID, item.ProductID, item.Quantity]);
-      }
-      res.status(201).json({ message: 'Order placed successfully' });
-  } catch (error) {
-      console.error('Error placing order:', error);
-      res.status(500).json({ message: 'Failed to place the order. Please try again.' });
-  }
-});
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+}); 
