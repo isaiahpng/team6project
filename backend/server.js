@@ -315,6 +315,24 @@ app.post('/api/redeem', async (req, res) => {
     }
 });
 
+// Add Item to Shopping Cart
+app.post('/api/cart/add', async (req, res) => {
+    const { userId, productId, quantity } = req.body;
+
+    try {
+        const query = `
+            INSERT INTO shoppingcartitems (UserID, ProductID, Quantity)
+            VALUES (?, ?, ?)
+            ON DUPLICATE KEY UPDATE Quantity = Quantity + ?;
+        `;
+        await db.execute(query, [userId, productId, quantity, quantity]);
+        res.status(201).json({ message: 'Item added to cart successfully' });
+    } catch (error) {
+        console.error('Error adding item to cart:', error);
+        res.status(500).json({ message: 'Error adding item to cart' });
+    }
+});
+
 // Start the server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
