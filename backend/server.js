@@ -7,11 +7,8 @@ const app = express();
 const port = process.env.PORT || 3001; // Use environment variable or default to 3001
 
 // Use CORS middleware
-app.use(cors({
-    origin: 'http://localhost:3000',
-    methods: ['GET', 'POST', 'OPTIONS'] 
-}));
-app.use(express.json()); 
+app.use(cors());
+app.use(express.json()); // Add this line to parse JSON requests
 
 const db = mysql.createConnection({
   host: '2024team6ds.mysql.database.azure.com',
@@ -22,6 +19,10 @@ const db = mysql.createConnection({
     rejectUnauthorized: true, // For production, true is safer; set to false for local dev if needed
   },
 });
+const cors = require('cors');
+app.use(cors({
+    origin: 'http://localhost:3000' // Adjust this to match your frontend's URL
+}));
 // Connect to MySQL
 db.connect((err) => {
   if (err) {
@@ -194,5 +195,3 @@ app.post('/api/order', async (req, res) => {
       res.status(500).json({ message: 'Failed to place the order. Please try again.' });
   }
 });
-
-app.options('/api/add-inventory', cors()); // Enable preflight for this route
