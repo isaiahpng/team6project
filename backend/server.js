@@ -2,17 +2,27 @@
 const express = require('express');
 const mysql = require('mysql');
 const bodyParser = require('body-parser');
+const cors = require('cors');
+const WebSocket = require('ws');
+require('dotenv').config(); // Load environment variables from .env file
 
 // Initialize Express app
 const app = express();
+const port = process.env.PORT || 3001; // Use environment variable or default to 3001
+
+// Middleware
+app.use(cors());
 app.use(bodyParser.json());
 
-// MySQL connection
+// MySQL connection using environment variables
 const db = mysql.createConnection({
-    host: 'localhost',
-    user: 'your_username',
-    password: 'your_password',
-    database: 'mydb'
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    ssl: {
+        rejectUnauthorized: true,
+    },
 });
 
 // Connect to MySQL
@@ -21,7 +31,56 @@ db.connect(err => {
         console.error('Database connection failed:', err.stack);
         return;
     }
-    console.log('Connected to database');
+    console.log('Connected to MySQL database');
+});
+
+// WebSocket setup
+const wss = new WebSocket.Server({ port: 8080 });
+
+wss.on('connection', (ws) => {
+    console.log('New client connected');
+
+    ws.on('close', () => {
+        console.log('Client disconnected');
+    });
+});
+
+// Function to create a notification
+const createNotification = (userId, message) => {
+    const query = 'INSERT INTO notifications (UserID, Message) VALUES (?, ?)';
+    db.query(query, [userId, message], (err, results) => {
+        if (err) {
+            console.error('Error creating notification:', err.stack);
+            return;
+        }
+        console.log('Notification created with ID:', results.insertId);
+        
+        // Notify the user via WebSocket
+        notifyClients(userId, message);
+    });
+};
+
+// Function to notify clients
+function notifyClients(userId, message) {
+    wss.clients.forEach(client => {
+        if (client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify({ userId, message }));
+        }
+    });
+}
+
+// Route to fetch notifications for a user
+app.get('/api/notifications/:userId', (req, res) => {
+    const userId = req.params.userId;
+    const query = 'SELECT * FROM notifications WHERE UserID = ? ORDER BY CreatedAt DESC';
+    
+    db.query(query, [userId], (err, results) => {
+        if (err) {
+            console.error('Error fetching notifications:', err.stack);
+            return res.status(500).json({ message: 'Error fetching notifications' });
+        }
+        res.json(results);
+    });
 });
 
 // Function to check inventory levels and send notifications for low stock
@@ -334,7 +393,6 @@ app.post('/api/cart/add', async (req, res) => {
 });
 
 // Start the server
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
 }); 
