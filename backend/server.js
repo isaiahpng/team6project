@@ -19,7 +19,10 @@ const db = mysql.createConnection({
     rejectUnauthorized: true, // For production, true is safer; set to false for local dev if needed
   },
 });
-
+const cors = require('cors');
+app.use(cors({
+    origin: 'http://localhost:3000' // Adjust this to match your frontend's URL
+}));
 // Connect to MySQL
 db.connect((err) => {
   if (err) {
