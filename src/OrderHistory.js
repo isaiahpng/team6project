@@ -41,10 +41,10 @@ const OrderHistory = ({ user }) => {
 
     // Get sorted orders
     const sortedOrders = sortOrders();
-    console.log("sortedOrders:", sortedOrders);
 
     return (
         <div className="order-history-container">
+            <h2>Order History</h2>
             <div className="sort-controls">
                 <label htmlFor="sort">Sort by: </label>
                 <select

@@ -41,6 +41,7 @@
   },
   "description": "1. `npm install -g npm`\r 2. `npm install express`\r 3. Next, `cd team6project-main` directory\r 4. `npm init`",
   "main": "C",
+  "devDependencies": {},
   "repository": {
     "type": "git",
     "url": "^C"

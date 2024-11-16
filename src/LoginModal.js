@@ -24,8 +24,7 @@ const LoginModal = ({ show, onClose, onLogin }) => {
       }
 
       const data = await response.json();
-      console.log('Login successful:', data);
-      onLogin(data); // Pass the username back to the parent component
+      onLogin(data.username); // Pass the username back to the parent component
       onClose();
     } catch (error) {
       console.error('Error logging in:', error);
