@@ -6,8 +6,11 @@ require('dotenv').config();
 const app = express();
 const port = process.env.PORT || 3001; // Use environment variable or default to 3001
 
-// Use CORS middleware
-app.use(cors());
+// Use CORS middleware 
+app.use((req, res, next) => {     
+  res.setHeader('Access-Control-Allow-Origin', '*'); 
+  next();
+});
 app.use(express.json()); // Add this line to parse JSON requests
 
 const db = mysql.createConnection({
