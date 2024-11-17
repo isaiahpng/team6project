@@ -86,22 +86,22 @@ app.post('/api/add-inventory', (req, res) => {
   });
 });
 
-// New route for placing an order and updating inventory
-app.post('/api/order', (req, res) => {
-  const cartItems = req.body;
+// // New route for placing an order and updating inventory
+// app.post('/api/order', (req, res) => {
+//   const cartItems = req.body;
 
-  const queries = cartItems.map((item) => {
-    return new Promise((resolve, reject) => {
-      const sql = 'UPDATE inventory SET InventoryQuantity = InventoryQuantity - 1 WHERE ProductID = ?';
-      db.query(sql, [item.ProductID], (err, result) => {
-        if (err) {
-          console.error(`Error updating inventory for ProductID ${item.ProductID}:`, err.stack);
-          return reject(err);
-        }
-        resolve(result);
-      });
-    });
-  });
+//   const queries = cartItems.map((item) => {
+//     return new Promise((resolve, reject) => {
+//       const sql = 'UPDATE inventory SET InventoryQuantity = InventoryQuantity - 1 WHERE ProductID = ?';
+//       db.query(sql, [item.ProductID], (err, result) => {
+//         if (err) {
+//           console.error(`Error updating inventory for ProductID ${item.ProductID}:`, err.stack);
+//           return reject(err);
+//         }
+//         resolve(result);
+//       });
+//     });
+//   });
 
   Promise.all(queries)
     .then(() => {
