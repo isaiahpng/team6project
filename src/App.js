@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 import TopNav from './TopNav';
 import LeftNav from './LeftNav';
@@ -16,13 +16,24 @@ function App() {
   const [isAdmin, setIsAdmin] = useState(false); // State for admin role
   const [activePage, setActivePage] = useState('Dashboard');
 
+  // Retrieve user data from localStorage on component mount
+  useEffect(() => {
+    const storedUser = JSON.parse(localStorage.getItem('user'));
+    if (storedUser) {
+      setUser(storedUser.username);
+      setIsAdmin(storedUser.isAdmin);
+    }
+  }, []);
+
   const addToCart = (item) => {
     setCart((prevCart) => [...prevCart, item]);
   };
 
   const handleLogin = (userData) => {
     setUser(userData.username);
-    setIsAdmin(userData.isAdmin); // Update isAdmin state based on login
+    setIsAdmin(userData.isAdmin);
+    // Store user data in localStorage
+    localStorage.setItem('user', JSON.stringify(userData));
   };
 
   const handleLogout = () => {
@@ -30,6 +41,8 @@ function App() {
     setIsAdmin(false);
     setCart([]);
     setActivePage('Dashboard');
+    // Remove user data from localStorage
+    localStorage.removeItem('user');
   };
 
   const renderPage = () => {
@@ -69,4 +82,3 @@ function App() {
 }
 
 export default App;
-

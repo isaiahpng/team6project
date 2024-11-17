@@ -3,7 +3,10 @@
 drop procedure if exists rptOrderHistoryForCustomer
 
 DELIMITER // -- add start and end date 
-create procedure rptOrderHistoryForCustomer(IN inCustomerID int)
+-- rptOrderHistoryForCustomer(UserID, StartDate, EndDate)
+-- enter userID for one user or null for all users
+-- format of Date 'yyyy-mm-dd'
+CREATE DEFINER=`serverAdminStepan`@`%` PROCEDURE `rptOrderHistoryForCustomer`(IN inUserID int, in startdate date, in enddate date)
 begin
 
 
@@ -22,11 +25,13 @@ from orders o
 	join virtualshoppingcart vsc on vsc.ShoppingCartID = o.ShoppingCartID
 	join orderStatusIndex osi on osi.id = o.orderStatus
 		where 
-			(o.userID = inCustomerID OR inCustomerID is null)
+			(o.userID = inUserID OR inUserID is null)
+            and
+            orderDate BETWEEN startDate AND endDate
 		order by 
 			OrderDate;
 
-end //
+end // 
 DELIMITER ;
 
 -- CustomerID 3 - 5
