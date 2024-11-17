@@ -50,51 +50,64 @@ exports.login = asyncHandler(async (req, res, _) => {
   }
 });
 exports.signup = asyncHandler(async (req, res, _) => {
-  const connection = await db.getConnection();
-
   try {
-    const { username, email, password, phoneNumber } = req.body;
-
-    await connection.beginTransaction();
-
-    const [existingUsers] = await connection.query(
+    const { username, email, password, phoneNumber, firstName, lastName } =
+      req.body;
+    const [existingUsers] = await db.query(
       "SELECT * FROM users WHERE Email = ? OR UserName = ?",
       [email, username]
     );
-
     if (existingUsers.length > 0) {
-      await connection.rollback();
       return res.status(400).json({
         error: "User already exists with this email or username",
       });
     }
-    const [maxUserResult] = await connection.query(
+    const [maxUserResult] = await db.query(
       "SELECT MAX(UserId) as maxId FROM users"
     );
     const nextUserId = (maxUserResult[0].maxId || 0) + 1;
     const hashedPassword = await bcrypt.hash(password, 10);
-    await connection.query(
-      `INSERT INTO users (UserId, UserName, Email, Password, PhoneNumber, isAdmin, discount) 
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    await db.query(
+      `INSERT INTO users (
+        UserId, 
+        UserName, 
+        Email, 
+        Password, 
+        PhoneNumber, 
+        isAdmin, 
+        discount
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [nextUserId, username, email, hashedPassword, phoneNumber, 0, 0]
     );
-    await connection.query(
-      "INSERT INTO customers (CustomerID, FirstName, LastName) VALUES (?, ?, ?)",
-      [nextUserId, username, ""]
+    await db.query(
+      `INSERT INTO customers (
+        CustomerID, 
+        FirstName, 
+        LastName, 
+        LoyaltyTier, 
+        TotalPoints
+      ) VALUES (?, ?, ?, ?, ?)`,
+      [nextUserId, firstName || null, lastName || null, "BRONZE", 0]
     );
-    await connection.commit();
+    await db.query(
+      `INSERT INTO loyalty_points (
+        customerID, 
+        total_points
+      ) VALUES (?, ?)`,
+      [nextUserId, 0]
+    );
     res.status(201).json({
-      message: "User created successfully",
+      message: "Registration successful",
       userId: nextUserId,
+      username,
+      email,
+      loyaltyTier: "BRONZE",
     });
   } catch (error) {
-    await connection.rollback();
     console.error("Signup error:", error);
     res.status(500).json({
       error: "Failed to create user",
     });
-  } finally {
-    connection.release();
   }
 });
 
