@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 import TopNav from './TopNav';
 import LeftNav from './LeftNav';
@@ -6,64 +6,79 @@ import RightCart from './RightCart';
 import InventoryDashboard from './InventoryDash';
 import OrderHistory from './OrderHistory';
 import Inventory from './Inventory';
-import NewInventory from './NewInventory'; // Import the NewInventory component
+import NewInventory from './NewInventory';
+import OrderHistoryAdmin from './OrderHistoryAdmin';
+import Login from './Login';
 
 function App() {
-    const [cart, setCart] = useState([]); // State for cart
-    const [user, setUser] = useState(null); // State for logged-in user
-    const [activePage, setActivePage] = useState('Dashboard'); // State to track active page
+  const [cart, setCart] = useState([]);
+  const [user, setUser] = useState(null); // State for logged-in user
+  const [isAdmin, setIsAdmin] = useState(false); // State for admin role
+  const [activePage, setActivePage] = useState('Dashboard');
 
-    // Add to cart function with user check
-    const addToCart = (item) => {
-        if (user) {
-            setCart((prevCart) => [...prevCart, item]);
-        } else {
-            alert("Please log in to add items to your cart.");
-        }
-    };
+  // Retrieve user data from localStorage on component mount
+  useEffect(() => {
+    const storedUser = JSON.parse(localStorage.getItem('user'));
+    if (storedUser) {
+      setUser(storedUser.username);
+      setIsAdmin(storedUser.isAdmin);
+    }
+  }, []);
 
-    // Handle user login
-    const handleLogin = (username) => {
-        setUser(username);
-    };
+  const addToCart = (item) => {
+    setCart((prevCart) => [...prevCart, item]);
+  };
 
-    // Handle user logout and clear cart
-    const handleLogout = () => {
-        setUser(null);
-        setCart([]); // Clear the cart when the user logs out
-    };
+  const handleLogin = (userData) => {
+    setUser(userData.username);
+    setIsAdmin(userData.isAdmin);
+    // Store user data in localStorage
+    localStorage.setItem('user', JSON.stringify(userData));
+  };
 
-    // Function to render the active page component
-    const renderPage = () => {
-        switch (activePage) {
-            case 'Dashboard':
-                return <InventoryDashboard addToCart={addToCart} user={user} />; // Pass user if needed
-            case 'Order History':
-                return <OrderHistory user={user} />; // Pass user to OrderHistory
-            case 'Inventory':
-                return <Inventory user={user} />; // Pass user to Inventory
-            case 'New Inventory':
-                return <NewInventory />; // Render NewInventory form page
-            default:
-                return <InventoryDashboard addToCart={addToCart} user={user} />;
-        }
-    };
+  const handleLogout = () => {
+    setUser(null);
+    setIsAdmin(false);
+    setCart([]);
+    setActivePage('Dashboard');
+    // Remove user data from localStorage
+    localStorage.removeItem('user');
+  };
 
-    return (
-        <div className="app-container">
-            <TopNav user={user} onLogin={handleLogin} onLogout={handleLogout} />
-            <div className="main-content">
-                <LeftNav setActivePage={setActivePage} user={user} /> {/* Pass setActivePage to LeftNav */}
-                <div className="dashboard">
-                    <h1>{activePage}</h1> {/* Display the active page title */}
-                    {renderPage()} {/* Render the appropriate page based on activePage */}
-                </div>
-                <RightCart cart={cart} setCart={setCart} user={user} /> {/* Pass user to RightCart */}
-            </div>
+  const renderPage = () => {
+    switch (activePage) {
+      case 'Dashboard':
+        return <InventoryDashboard addToCart={addToCart} />;
+      case 'Order History':
+        return <OrderHistory user={user} />;
+      case 'Inventory':
+        return <Inventory user={user} />;
+      case 'New Inventory':
+        return <NewInventory />;
+      case 'Admin Order History':
+        return <OrderHistoryAdmin />;
+      default:
+        return <InventoryDashboard addToCart={addToCart} />;
+    }
+  };
+
+  if (!user) {
+    return <Login onLogin={handleLogin} />;
+  }
+
+  return (
+    <div className="app-container">
+      <TopNav user={user} onLogout={handleLogout} />
+      <div className="main-content">
+        <LeftNav setActivePage={setActivePage} isAdmin={isAdmin} />
+        <div className="dashboard">
+          <h1>{activePage}</h1>
+          {renderPage()}
         </div>
-    );
+        <RightCart cart={cart} setCart={setCart} user={user} />
+      </div>
+    </div>
+  );
 }
 
 export default App;
-
-

@@ -1,39 +1,40 @@
 // RightCart.js
 import React, { useState } from 'react';
 import './App.css';
+import axios from 'axios';
 
-const RightCart = ({ cart, setCart, userID }) => {
+
+const RightCart = ({ cart, setCart, user}) => {
   const [hoveredItem, setHoveredItem] = useState(null);
 
   // Calculate total
   const totalPrice = cart.reduce((total, item) => total + item.Price, 0);
-
-  const placeOrder = async () => {
-    try {
-      const response = await fetch('https://team6project.onrender.com/api/order', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(userID, cart), // Convert cart items to JSON
-      });
-
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-
-      alert('Order placed successfully!');
-      setCart([]); // Clear cart after order is placed
-    } catch (error) {
-      console.error('Error placing order:', error);
-      alert('Failed to place the order. Please try again.');
-    }
-  };
-
+  
   const removeFromCart = (itemToRemove) => {
     setCart((prevCart) => prevCart.filter(item => item.ProductID !== itemToRemove.ProductID));
   };
 
+  const placeOrder = async () => {
+    const order = {
+      UserID: user.UserID,
+      OrderStatus: 'Pending',
+      OrderDate: new Date().toISOString(),
+      ShoppingCartID: user.UserID,
+      TotalAmount: totalPrice.toFixed(2),
+    };
+  
+    try {
+      const response = await axios.post('https://team6project.onrender.com/api/placeOrder', order);
+  
+      // Handle response if needed
+      console.log('Order placed successfully:', response.data);
+  
+      // Clear the cart
+      setCart([]);
+    } catch (error) {
+      console.error('Error placing order:', error);
+    }
+  };
   return (
     <div className="right-cart">
       <h3>Your Cart</h3>
