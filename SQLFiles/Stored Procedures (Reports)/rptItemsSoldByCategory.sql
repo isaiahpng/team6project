@@ -1,7 +1,11 @@
+
+-- rptItemsSoldByCategory()
+-- No parameters
+
 DELIMITER // 
 drop procedure if exists rptItemsSoldByCategory;
 
-CREATE PROCEDURE rptItemsSoldByCategory() 
+CREATE DEFINER=`serverAdminStepan`@`%` PROCEDURE `rptItemsSoldByCategory`()
 BEGIN 
 
 SELECT 

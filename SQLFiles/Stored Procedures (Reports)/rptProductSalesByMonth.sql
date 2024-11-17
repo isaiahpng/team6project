@@ -1,31 +1,35 @@
 -- Creates 
-
 -- REPORT 2
+
+-- rptProductSalesByMonth(InputID, Month (int))
+-- enter productID for inputID param, Month value 1-12 for month or null for either to get all of that value
+
 
 drop procedure if exists productSalesByMonth;
 DELIMITER // 
-create procedure productSalesByMonth(in product_id int , in monthValue int)
+CREATE DEFINER=`serverAdminStepan`@`%` PROCEDURE `productSalesByMonth`(in inputID int , in monthValue int)
 begin
 
-declare inputID int;
-declare inputMonth int;
 
-set inputID = product_id;
-set inputMonth = monthValue;
--- int @inputID = 6969
--- int @inputMonth = 10
-
-select sum(productQuantity), Month(orderDate), sum(price) -- , inv.ProductID, ProductName, ProductDescription
-from inventory inv
+select sum(productQuantity) as TotalQuantity,
+ Month(orderDate) as OrderMonth,
+ sum(price * sci.ProductQuantity) as TotalPrice,
+ ProductName,
+ ProductDescription,
+ inv.ProductID -- , ProductName, ProductDescription
+ 
+from 
+inventory inv
 join shoppingcartitems sci on sci.productID = inv.productID
 -- join virtualshoppingcart csc on csc.ShoppingcartID = sci.shoppingcartID
-join orders on orders.ShoppingCartID = sci.shoppingcartID
-	where inv.ProductID = inputID
-    and month(orderDate) = inputMonth
+join orders o on o.ShoppingCartID = sci.shoppingcartID
+	where 
+		(inv.ProductID = inputID OR inputID is null)
+        and (month(o.OrderDate) = monthvalue or Monthvalue is null)
     
-group by month(orderDate) ;
+group by month(o.orderDate), ProductName, Productdescription, ProductID ;
 
-end // 
+end //
 DELIMITER ;
 
 
