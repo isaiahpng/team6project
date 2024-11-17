@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import './App.css';
 
-const RightCart = ({ cart, setCart }) => {
+const RightCart = ({ cart, setCart, userID }) => {
   const [hoveredItem, setHoveredItem] = useState(null);
 
   // Calculate total
@@ -15,7 +15,7 @@ const RightCart = ({ cart, setCart }) => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(cart), // Convert cart items to JSON
+        body: JSON.stringify(userID, cart), // Convert cart items to JSON
       });
 
       if (!response.ok) {
