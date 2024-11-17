@@ -1,26 +1,25 @@
 // RightCart.js
 import React, { useState } from 'react';
 import './App.css';
+import CheckoutForm from './components/CheckoutForm';
+import { Snackbar, Alert } from '@mui/material';
 
-const RightCart = ({ cart, setCart, user}) => {
+const RightCart = ({ cart, setCart, user }) => {
   const [hoveredItem, setHoveredItem] = useState(null);
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success'
+  });
 
   // Calculate total
   const totalPrice = cart.reduce((total, item) => total + item.Price, 0);
 
-  const placeOrder = async () => {
-    // Function to get or generate a ShoppingCartID
-    const generateNewCartID = async (userID) => {
-      try {
-        const response = await fetch(`https://team6project.onrender.com/api/getShoppingCartId?userId=${userID}`);
-        const data = await response.json();
-        return data.ShoppingCartID || Math.floor(Math.random() * 100000); // Generate new ID if none exists
-      } catch (error) {
-        console.error("Error fetching ShoppingCartID:", error);
-        return Math.floor(Math.random() * 100000); // Fallback ID
-      }
-    };
-
+  const handleCheckout = async (paymentData) => {
+    setIsProcessing(true);
+    
     try {
       // Map cart items to include ProductID and Quantity
       const cartItems = cart.map(item => ({
@@ -28,8 +27,25 @@ const RightCart = ({ cart, setCart, user}) => {
         Quantity: 1 // You can modify this if you implement quantity selection
       }));
 
-      // Place the order
-      const response = await fetch('https://team6project.onrender.com/api/order', {
+      // First save payment information
+      const paymentResponse = await fetch('https://team6project.onrender.com/api/payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user?.id,
+          amount: totalPrice,
+          paymentDetails: paymentData
+        })
+      });
+
+      if (!paymentResponse.ok) {
+        throw new Error('Payment failed');
+      }
+
+      // Then place the order
+      const orderResponse = await fetch('https://team6project.onrender.com/api/order', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -37,22 +53,37 @@ const RightCart = ({ cart, setCart, user}) => {
         body: JSON.stringify(cartItems)
       });
 
-      if (!response.ok) {
+      if (!orderResponse.ok) {
         throw new Error('Failed to place order');
       }
 
-      // Clear the cart after successful order
+      // Clear the cart and close checkout
       setCart([]);
-      alert('Order placed successfully!');
+      setIsCheckoutOpen(false);
+      setSnackbar({
+        open: true,
+        message: 'Order placed successfully!',
+        severity: 'success'
+      });
     } catch (error) {
-      console.error('Error placing order:', error);
-      alert('Failed to place order. Please try again.');
+      console.error('Error during checkout:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to process order. Please try again.',
+        severity: 'error'
+      });
+    } finally {
+      setIsProcessing(false);
     }
   };
 
   const removeFromCart = (index) => {
     const newCart = cart.filter((_, i) => i !== index);
     setCart(newCart);
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar(prev => ({ ...prev, open: false }));
   };
 
   return (
@@ -83,12 +114,36 @@ const RightCart = ({ cart, setCart, user}) => {
         <strong>Total: ${totalPrice.toFixed(2)}</strong>
       </div>
       <button
-        className="place-order-button"
-        onClick={placeOrder}
+        className="checkout-button"
+        onClick={() => setIsCheckoutOpen(true)}
         disabled={cart.length === 0}
       >
-        Place Order
+        Check Out
       </button>
+
+      <CheckoutForm 
+        open={isCheckoutOpen}
+        onClose={() => setIsCheckoutOpen(false)}
+        onSubmit={handleCheckout}
+        total={totalPrice}
+        isProcessing={isProcessing}
+      />
+
+      <Snackbar 
+        open={snackbar.open} 
+        autoHideDuration={6000} 
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+      >
+        <Alert 
+          onClose={handleCloseSnackbar} 
+          severity={snackbar.severity}
+          elevation={6}
+          variant="filled"
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </div>
   );
 };

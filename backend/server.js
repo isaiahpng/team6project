@@ -326,6 +326,80 @@ app.get('/api/admin/order-stats', async (req, res) => {
     }
 });
 
+// Payment endpoint
+app.post('/api/payment', async (req, res) => {
+  const { userId, amount, paymentDetails } = req.body;
+
+  try {
+    // In a real application, you would integrate with a payment processor here
+    // For now, we'll just store the payment record in our database
+    
+    // First, create a payment record
+    const paymentQuery = `
+      INSERT INTO Payments (
+        UserID,
+        Amount,
+        PaymentDate,
+        PaymentStatus,
+        LastFourDigits
+      ) VALUES (?, ?, NOW(), 'completed', ?)
+    `;
+
+    const lastFourDigits = paymentDetails.cardNumber.replace(/\s/g, '').slice(-4);
+    
+    db.query(
+      paymentQuery,
+      [userId, amount, lastFourDigits],
+      (error, results) => {
+        if (error) {
+          console.error('Error creating payment record:', error);
+          res.status(500).json({ error: 'Failed to process payment' });
+          return;
+        }
+
+        // Create a billing record
+        const billingQuery = `
+          INSERT INTO BillingAddresses (
+            UserID,
+            PaymentID,
+            Address,
+            City,
+            State,
+            ZipCode
+          ) VALUES (?, ?, ?, ?, ?, ?)
+        `;
+
+        db.query(
+          billingQuery,
+          [
+            userId,
+            results.insertId,
+            paymentDetails.billingAddress,
+            paymentDetails.city,
+            paymentDetails.state,
+            paymentDetails.zipCode
+          ],
+          (billingError) => {
+            if (billingError) {
+              console.error('Error creating billing record:', billingError);
+              // Note: Payment was still successful, so we'll still return success
+            }
+
+            res.json({
+              success: true,
+              paymentId: results.insertId,
+              message: 'Payment processed successfully'
+            });
+          }
+        );
+      }
+    );
+  } catch (error) {
+    console.error('Error processing payment:', error);
+    res.status(500).json({ error: 'Failed to process payment' });
+  }
+});
+
 // Payment endpoints
 app.post('/api/payments', async (req, res) => {
     try {
