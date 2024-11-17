@@ -7,6 +7,7 @@ const LeftNav = ({ setActivePage, isAdmin }) => {
     <div className="left-nav">
       <ul>
         <li><a onClick={() => setActivePage('Dashboard')}>Dashboard</a></li>
+        <li><a onClick={() => setActivePage('Profile')}>Profile</a></li>
         {isAdmin && (
           <li><a onClick={() => setActivePage('Admin Order History')}>Order History</a></li>
         )} 

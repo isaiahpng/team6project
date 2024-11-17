@@ -9,6 +9,7 @@ import Inventory from './Inventory';
 import NewInventory from './NewInventory';
 import OrderHistoryAdmin from './OrderHistoryAdmin';
 import Login from './Login';
+import UserProfile from './components/UserProfile';
 
 function App() {
   const [cart, setCart] = useState([]);
@@ -57,6 +58,8 @@ function App() {
         return <NewInventory />;
       case 'Admin Order History':
         return <OrderHistoryAdmin />;
+      case 'Profile':
+        return <UserProfile user={user} />;
       default:
         return <InventoryDashboard addToCart={addToCart} />;
     }

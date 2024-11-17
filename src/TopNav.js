@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import './App.css';
 import LoginModal from './LoginModal';
+import StarIcon from '@mui/icons-material/Star';
 
 const TopNav = ({ user, onLogin, onLogout }) => {
     const [showLogin, setShowLogin] = useState(false);
@@ -13,6 +14,13 @@ const TopNav = ({ user, onLogin, onLogout }) => {
         setShowLogin(false);
     };
 
+    const getLoyaltyTier = (points) => {
+        if (points >= 150) return 'Platinum';
+        if (points >= 100) return 'Gold';
+        if (points >= 50) return 'Silver';
+        return 'Bronze';
+    };
+
     return (
         <div className="top-nav">
             <div className="pos-title">
@@ -21,7 +29,11 @@ const TopNav = ({ user, onLogin, onLogout }) => {
             <div className="user-info">
                 {user ? (
                     <>
-                        <span className="welcome-message">Welcome, {user}</span>
+                        <div className="loyalty-status">
+                            <StarIcon sx={{ mr: 1 }} />
+                            <span>{user.LoyaltyPoints || 0} points ({getLoyaltyTier(user.LoyaltyPoints || 0)})</span>
+                        </div>
+                        <span className="username">{user.Username}</span>
                         <button onClick={onLogout} className="logout-button">Logout</button>
                     </>
                 ) : (

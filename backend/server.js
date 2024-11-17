@@ -392,6 +392,47 @@ app.post('/api/cart/add', async (req, res) => {
     }
 });
 
+// Route to update inventory item
+app.put('/api/inventory/:id', (req, res) => {
+  const { ProductName, Price, InventoryQuantity } = req.body;
+  const productId = req.params.id;
+
+  const query = `
+    UPDATE inventory 
+    SET ProductName = ?, Price = ?, InventoryQuantity =?
+    WHERE ProductID =?
+  `;
+  
+  db.query(query, [ProductName, Price, InventoryQuantity, productId], (err, results) => {
+    if (err) {
+      console.error('Error updating inventory item:', err.stack);
+      return res.status(500).json({ message: 'Error updating inventory item' });
+    }
+    if (results.affectedRows === 0) {
+      return res.status(404).json({ message: 'Item not found' });
+    }
+    res.status(200).json({ message: 'Inventory item updated successfully' });
+  });
+});
+
+// Route to delete inventory item
+app.delete('/api/inventory/:id', (req, res) => {
+  const productId = req.params.id;
+
+  const query = 'DELETE FROM inventory WHERE ProductID = ?';
+  
+  db.query(query, [productId], (err, results) => {
+    if (err) {
+      console.error('Error deleting inventory item:', err.stack);
+      return res.status(500).json({ message: 'Error deleting inventory item' });
+    }
+    if (results.affectedRows === 0) {
+      return res.status(404).json({ message: 'Item not found' });
+    }
+    res.status(200).json({ message: 'Inventory item deleted successfully' });
+  });
+});
+
 // Start the server
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
