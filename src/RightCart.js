@@ -1,69 +1,40 @@
 // RightCart.js
 import React, { useState } from 'react';
 import './App.css';
+import axios from 'axios';
+
 
 const RightCart = ({ cart, setCart, user}) => {
   const [hoveredItem, setHoveredItem] = useState(null);
 
   // Calculate total
   const totalPrice = cart.reduce((total, item) => total + item.Price, 0);
-
-  const placeOrder = async () => {
-    // Function to get or generate a ShoppingCartID
-    const generateNewCartID = async (userID) => {
-      try {
-        const response = await fetch(`https://team6project.onrender.com/api/getShoppingCartId?userId=${userID}`);
-        const data = await response.json();
-        return data.ShoppingCartID || Math.floor(Math.random() * 100000); // Generate new ID if none exists
-      } catch (error) {
-        console.error("Error fetching ShoppingCartID:", error);
-        return Math.floor(Math.random() * 100000); // Fallback ID
-      }
-    };
-  
-    try {
-      // Fetch the UserID using the logged-in username
-      const userIdResponse = await fetch(`https://team6project.onrender.com/api/getUserId?username=${user}`);
-      const userIdData = await userIdResponse.json();
-      const UserID = userIdData.UserID; // Assuming UserID is returned in response
-  
-      // Generate or retrieve the ShoppingCartID
-      const ShoppingCartID = await generateNewCartID(UserID);
-  
-      // Prepare order details
-      const orderDetails = {
-        UserID,
-        OrderStatus: 'Pending', // Always Pending
-        OrderDate: new Date().toISOString(), // Current date and time
-        ShoppingCartID,
-        CartItems: cart, // Include cart items
-      };
-  
-      // Send the order data to the backend
-      const response = await fetch('https://team6project.onrender.com/api/orders', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(orderDetails),
-      });
-  
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-  
-      alert('Order placed successfully!');
-      setCart([]); // Clear cart after order is placed
-    } catch (error) {
-      console.error('Error placing order:', error);
-      alert('Failed to place the order. Please try again.');
-    }
-  };
   
   const removeFromCart = (itemToRemove) => {
     setCart((prevCart) => prevCart.filter(item => item.ProductID !== itemToRemove.ProductID));
   };
 
+  const placeOrder = async () => {
+    const order = {
+      UserID: user.UserID,
+      OrderStatus: 'Pending',
+      OrderDate: new Date().toISOString(),
+      ShoppingCartID: user.UserID,
+      TotalAmount: totalPrice.toFixed(2),
+    };
+  
+    try {
+      const response = await axios.post('https://team6project.onrender.com/api/placeOrder', order);
+  
+      // Handle response if needed
+      console.log('Order placed successfully:', response.data);
+  
+      // Clear the cart
+      setCart([]);
+    } catch (error) {
+      console.error('Error placing order:', error);
+    }
+  };
   return (
     <div className="right-cart">
       <h3>Your Cart</h3>
