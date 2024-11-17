@@ -16,8 +16,9 @@ import DeleteIcon from '@mui/icons-material/Delete';
 const InventoryDashboard = ({ addToCart }) => {
     const [inventory, setInventory] = useState([]);
     const [sortOption, setSortOption] = useState('quantityAsc');
-    const [editItem, setEditItem] = useState(null);
-    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editingItem, setEditingItem] = useState(null);
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [itemToDelete, setItemToDelete] = useState(null);
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
@@ -26,57 +27,130 @@ const InventoryDashboard = ({ addToCart }) => {
         fetchInventory();
     }, []);
 
-    const fetchInventory = () => {
-        fetch('https://team6project.onrender.com/api/inventory')
-            .then(response => {
-                if (!response.ok) throw new Error('Network response was not ok');
-                return response.json();
-            })
-            .then(data => setInventory(data))
-            .catch(error => {
-                console.error('Error fetching inventory:', error);
-                showSnackbar('Failed to fetch inventory', 'error');
-            });
-    };
-
-    const handleEdit = (item, event) => {
-        event.stopPropagation();
-        setEditItem({
-            ...item,
-            Price: parseFloat(item.Price) || 0,
-            InventoryQuantity: parseInt(item.InventoryQuantity) || 0
-        });
-        setIsEditModalOpen(true);
-    };
-
-    const handleDelete = (item, event) => {
-        event.stopPropagation();
-        setItemToDelete(item);
-        setIsDeleteDialogOpen(true);
-    };
-
-    const handleEditSubmit = async () => {
+    const fetchInventory = async () => {
         try {
-            const response = await fetch(`https://team6project.onrender.com/api/inventory/${editItem.ProductID}`, {
+            const response = await fetch('https://team6project.onrender.com/api/inventory');
+            if (!response.ok) {
+                throw new Error('Failed to fetch inventory');
+            }
+            const data = await response.json();
+            setInventory(data);
+        } catch (error) {
+            console.error('Error fetching inventory:', error);
+            setError('Failed to fetch inventory');
+        }
+    };
+
+    const handleEdit = (item) => {
+        setEditingItem({ ...item });
+        setError('');
+        setSuccess('');
+    };
+
+    const handleEditChange = (e) => {
+        const { name, value, type } = e.target;
+        let processedValue = value;
+
+        if (type === 'number') {
+            processedValue = value === '' ? '' : Number(value);
+        }
+
+        setEditingItem({
+            ...editingItem,
+            [name]: processedValue
+        });
+    };
+
+    const handleEditSubmit = async (e) => {
+        e.preventDefault();
+        setError('');
+        setSuccess('');
+
+        // Validate inputs
+        if (!editingItem.ProductName) {
+            setError('Product name is required');
+            return;
+        }
+
+        if (editingItem.InventoryQuantity === '' || isNaN(editingItem.InventoryQuantity)) {
+            setError('Valid quantity is required');
+            return;
+        }
+
+        if (editingItem.Price === '' || isNaN(editingItem.Price)) {
+            setError('Valid price is required');
+            return;
+        }
+
+        try {
+            const formData = {
+                ...editingItem,
+                InventoryQuantity: parseInt(editingItem.InventoryQuantity),
+                Price: parseFloat(editingItem.Price)
+            };
+
+            console.log('Updating inventory item:', formData);
+
+            const response = await fetch(`https://team6project.onrender.com/api/inventory/${editingItem.ProductID}`, {
                 method: 'PUT',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({
-                    ProductName: editItem.ProductName,
-                    Price: editItem.Price,
-                    InventoryQuantity: editItem.InventoryQuantity
-                })
+                body: JSON.stringify(formData)
             });
 
-            if (!response.ok) throw new Error('Failed to update item');
-            
-            showSnackbar('Item updated successfully', 'success');
+            let data;
+            try {
+                data = await response.json();
+            } catch (err) {
+                console.error('Error parsing response:', err);
+                throw new Error('Invalid server response');
+            }
+
+            console.log('Server response:', data);
+
+            if (!response.ok) {
+                throw new Error(data.error || data.message || 'Failed to update item');
+            }
+
+            setSuccess('Item updated successfully!');
+            setEditingItem(null);
             fetchInventory();
-            setIsEditModalOpen(false);
         } catch (error) {
             console.error('Error updating item:', error);
-            showSnackbar('Failed to update item', 'error');
+            setError(error.message || 'Failed to update item');
+        }
+    };
+
+    const handleDelete = async (productId) => {
+        if (!window.confirm('Are you sure you want to delete this item?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`https://team6project.onrender.com/api/inventory/${productId}`, {
+                method: 'DELETE'
+            });
+
+            let data;
+            try {
+                data = await response.json();
+            } catch (err) {
+                console.error('Error parsing response:', err);
+                throw new Error('Invalid server response');
+            }
+
+            console.log('Server response:', data);
+
+            if (!response.ok) {
+                throw new Error(data.error || data.message || 'Failed to delete item');
+            }
+
+            setSuccess('Item deleted successfully!');
+            fetchInventory();
+        } catch (error) {
+            console.error('Error deleting item:', error);
+            setError(error.message || 'Failed to delete item');
         }
     };
 
@@ -86,14 +160,26 @@ const InventoryDashboard = ({ addToCart }) => {
                 method: 'DELETE'
             });
 
-            if (!response.ok) throw new Error('Failed to delete item');
-            
-            showSnackbar('Item deleted successfully', 'success');
+            let data;
+            try {
+                data = await response.json();
+            } catch (err) {
+                console.error('Error parsing response:', err);
+                throw new Error('Invalid server response');
+            }
+
+            console.log('Server response:', data);
+
+            if (!response.ok) {
+                throw new Error(data.error || data.message || 'Failed to delete item');
+            }
+
+            setSuccess('Item deleted successfully!');
             fetchInventory();
             setIsDeleteDialogOpen(false);
         } catch (error) {
             console.error('Error deleting item:', error);
-            showSnackbar('Failed to delete item', 'error');
+            setError(error.message || 'Failed to delete item');
         }
     };
 
@@ -142,6 +228,9 @@ const InventoryDashboard = ({ addToCart }) => {
                 </select>
             </div>
 
+            {error && <div className="error-message">{error}</div>}
+            {success && <div className="success-message">{success}</div>}
+
             <div className="inventory-grid">
                 {sortInventory().map(item => (
                     <div className="inventory-item" key={item.ProductID}>
@@ -154,10 +243,13 @@ const InventoryDashboard = ({ addToCart }) => {
                             )}
                         </div>
                         <div className="item-actions">
-                            <IconButton onClick={(e) => handleEdit(item, e)} color="primary" size="small">
+                            <IconButton onClick={() => handleEdit(item)} color="primary" size="small">
                                 <EditIcon />
                             </IconButton>
-                            <IconButton onClick={(e) => handleDelete(item, e)} color="error" size="small">
+                            <IconButton onClick={() => {
+                                setItemToDelete(item);
+                                setIsDeleteDialogOpen(true);
+                            }} color="error" size="small">
                                 <DeleteIcon />
                             </IconButton>
                         </div>
@@ -165,43 +257,81 @@ const InventoryDashboard = ({ addToCart }) => {
                 ))}
             </div>
 
-            {/* Edit Modal */}
-            <Dialog open={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}>
-                <DialogTitle>Edit Item</DialogTitle>
-                <DialogContent>
-                    {editItem && (
-                        <>
-                            <TextField
-                                label="Product Name"
-                                fullWidth
-                                margin="normal"
-                                value={editItem.ProductName}
-                                onChange={(e) => setEditItem({ ...editItem, ProductName: e.target.value })}
+            {editingItem ? (
+                <div className="edit-form">
+                    <h3>Edit Item</h3>
+                    <form onSubmit={handleEditSubmit}>
+                        <div>
+                            <label>Product Name:</label>
+                            <input
+                                type="text"
+                                name="ProductName"
+                                value={editingItem.ProductName}
+                                onChange={handleEditChange}
+                                required
                             />
-                            <TextField
-                                label="Price"
+                        </div>
+                        <div>
+                            <label>Description:</label>
+                            <textarea
+                                name="ProductDescription"
+                                value={editingItem.ProductDescription || ''}
+                                onChange={handleEditChange}
+                                rows="4"
+                                placeholder="Enter product description"
+                                style={{ width: '100%', minHeight: '100px', padding: '8px' }}
+                            />
+                        </div>
+                        <div>
+                            <label>Quantity:</label>
+                            <input
                                 type="number"
-                                fullWidth
-                                margin="normal"
-                                value={editItem.Price}
-                                onChange={(e) => setEditItem({ ...editItem, Price: parseFloat(e.target.value) })}
+                                name="InventoryQuantity"
+                                value={editingItem.InventoryQuantity}
+                                onChange={handleEditChange}
+                                required
+                                min="0"
                             />
-                            <TextField
-                                label="Quantity"
+                        </div>
+                        <div>
+                            <label>Price:</label>
+                            <input
                                 type="number"
-                                fullWidth
-                                margin="normal"
-                                value={editItem.InventoryQuantity}
-                                onChange={(e) => setEditItem({ ...editItem, InventoryQuantity: parseInt(e.target.value) })}
+                                name="Price"
+                                value={editingItem.Price}
+                                onChange={handleEditChange}
+                                required
+                                min="0"
+                                step="0.01"
                             />
-                        </>
-                    )}
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setIsEditModalOpen(false)}>Cancel</Button>
-                    <Button onClick={handleEditSubmit} color="primary">Save</Button>
-                </DialogActions>
-            </Dialog>
+                        </div>
+                        <div>
+                            <label>Tag:</label>
+                            <input
+                                type="text"
+                                name="Tag"
+                                value={editingItem.Tag || ''}
+                                onChange={handleEditChange}
+                            />
+                        </div>
+                        <div>
+                            <label>Image URL:</label>
+                            <input
+                                type="text"
+                                name="imageUrl"
+                                value={editingItem.imageUrl || ''}
+                                onChange={handleEditChange}
+                            />
+                        </div>
+                        <div className="button-group">
+                            <button type="submit">Save Changes</button>
+                            <button type="button" onClick={() => setEditingItem(null)}>Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            ) : (
+                <></>
+            )}
 
             {/* Delete Confirmation Dialog */}
             <Dialog open={isDeleteDialogOpen} onClose={() => setIsDeleteDialogOpen(false)}>

@@ -1,4 +1,3 @@
-<<<<<<< Updated upstream
 // RightCart.js
 import React, { useState } from 'react';
 import './App.css';
@@ -21,144 +20,77 @@ const RightCart = ({ cart, setCart, user}) => {
         return Math.floor(Math.random() * 100000); // Fallback ID
       }
     };
-  
+
     try {
-      // Fetch the UserID using the logged-in username
-      const userIdResponse = await fetch(`https://team6project.onrender.com/api/getUserId?username=${user}`);
-      const userIdData = await userIdResponse.json();
-      const UserID = userIdData.UserID; // Assuming UserID is returned in response
-  
-      // Generate or retrieve the ShoppingCartID
-      const ShoppingCartID = await generateNewCartID(UserID);
-  
-      // Prepare order details
-      const orderDetails = {
-        UserID,
-        OrderStatus: 'Pending', // Always Pending
-        OrderDate: new Date().toISOString(), // Current date and time
-        ShoppingCartID,
-        CartItems: cart, // Include cart items
-      };
-  
-      // Send the order data to the backend
+      // Map cart items to include ProductID and Quantity
+      const cartItems = cart.map(item => ({
+        ProductID: item.ProductID,
+        Quantity: 1 // You can modify this if you implement quantity selection
+      }));
+
+      // Place the order
       const response = await fetch('https://team6project.onrender.com/api/order', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(orderDetails),
+        body: JSON.stringify(cartItems)
       });
-  
+
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        throw new Error('Failed to place order');
       }
-  
-      alert('Order placed successfully!');
-      setCart([]); // Clear cart after order is placed
-    } catch (error) {
-      console.error('Error placing order:', error);
-      alert('Failed to place the order. Please try again.');
-    }
-  };
-  
-  const removeFromCart = (itemToRemove) => {
-    setCart((prevCart) => prevCart.filter(item => item.ProductID !== itemToRemove.ProductID));
-  };
 
-  return (
-    <div className="right-cart">
-      <h3>Your Cart</h3>
-      <div>
-        {cart.length === 0 ? (
-          <p>Your cart is empty.</p> // Message when cart is empty
-        ) : (
-          cart.map(item => (
-            <div className="cart-item" key={item.ProductID} onMouseEnter={() => setHoveredItem(item)} onMouseLeave={() => setHoveredItem(null)}>
-              <span>{item.ProductName}</span>
-              <span>${item.Price.toFixed(2)}</span>
-              {hoveredItem === item && (
-                <span className="remove-hover" onClick={() => removeFromCart(item)}>Remove</span>
-              )}
-            </div>
-          ))
-        )}
-      </div>
-      <div className="cart-total">
-        <p>Subtotal: ${totalPrice.toFixed(2)}</p>
-        <button onClick={placeOrder}>Place Order</button>
-      </div>
-    </div>
-  );
-};
-
-export default RightCart;
-=======
-// RightCart.js
-import React, { useState } from 'react';
-import './App.css';
-import axios from 'axios';
-
-
-const RightCart = ({ cart, setCart, user}) => {
-  const [hoveredItem, setHoveredItem] = useState(null);
-
-  // Calculate total
-  const totalPrice = cart.reduce((total, item) => total + item.Price, 0);
-  
-  const removeFromCart = (itemToRemove) => {
-    setCart((prevCart) => prevCart.filter(item => item.ProductID !== itemToRemove.ProductID));
-  };
-
-  const placeOrder = async () => {
-    const order = {
-      UserID: user.UserID,
-      OrderStatus: 'Pending',
-      OrderDate: new Date().toISOString(),
-      ShoppingCartID: user.UserID,
-      CartItems: cart.map(item => ({
-        ProductID: item.ProductID,
-        Quantity: 1
-      })),
-      TotalAmount: totalPrice.toFixed(2),
-    };
-  
-    try {
-      const response = await axios.post('https://team6project.onrender.com/api/order', order);
-  
-      // Handle response if needed
-      console.log('Order placed successfully:', response.data);
-  
-      // Clear the cart
+      // Clear the cart after successful order
       setCart([]);
+      alert('Order placed successfully!');
     } catch (error) {
       console.error('Error placing order:', error);
+      alert('Failed to place order. Please try again.');
     }
   };
+
+  const removeFromCart = (index) => {
+    const newCart = cart.filter((_, i) => i !== index);
+    setCart(newCart);
+  };
+
   return (
     <div className="right-cart">
-      <h3>Your Cart</h3>
-      <div>
-        {cart.length === 0 ? (
-          <p>Your cart is empty.</p> // Message when cart is empty
-        ) : (
-          cart.map(item => (
-            <div className="cart-item" key={item.ProductID} onMouseEnter={() => setHoveredItem(item)} onMouseLeave={() => setHoveredItem(null)}>
-              <span>{item.ProductName}</span>
-              <span>${item.Price.toFixed(2)}</span>
-              {hoveredItem === item && (
-                <span className="remove-hover" onClick={() => removeFromCart(item)}>Remove</span>
-              )}
-            </div>
-          ))
-        )}
+      <h2>Shopping Cart</h2>
+      <div className="cart-items">
+        {cart.map((item, index) => (
+          <div
+            key={index}
+            className="cart-item"
+            onMouseEnter={() => setHoveredItem(index)}
+            onMouseLeave={() => setHoveredItem(null)}
+          >
+            <span>{item.ProductName}</span>
+            <span>${item.Price.toFixed(2)}</span>
+            {hoveredItem === index && (
+              <button
+                className="remove-button"
+                onClick={() => removeFromCart(index)}
+              >
+                Remove
+              </button>
+            )}
+          </div>
+        ))}
       </div>
       <div className="cart-total">
-        <p>Subtotal: ${totalPrice.toFixed(2)}</p>
-        <button onClick={placeOrder}>Place Order</button>
+        <strong>Total: ${totalPrice.toFixed(2)}</strong>
       </div>
+      <button
+        className="place-order-button"
+        onClick={placeOrder}
+        disabled={cart.length === 0}
+      >
+        Place Order
+      </button>
     </div>
   );
 };
 
 export default RightCart;
->>>>>>> Stashed changes
