@@ -12,7 +12,10 @@ const app = express();
 const port = process.env.PORT || 3001;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:3000', 'https://team6project.onrender.com'],
+  credentials: true
+}));
 app.use(bodyParser.json());
 
 // DB connection
@@ -683,15 +686,30 @@ app.post('/api/order', async (req, res) => {
   }
 });
 
-// Route to update inventory item
+// Update inventory item
 app.put('/api/inventory/:id', async (req, res) => {
-  const { ProductName, Price, InventoryQuantity } = req.body;
   const productId = req.params.id;
+  const { ProductName, ProductDescription, InventoryQuantity, Price, Tag } = req.body;
 
-  // First check if the item exists
-  const checkQuery = 'SELECT * FROM inventory WHERE ProductID = ?';
-  
+  // Validate input
+  if (!ProductName?.trim()) {
+    return res.status(400).json({ message: 'Product name required' });
+  }
+
+  const quantity = Number(InventoryQuantity);
+  const price = Number(Price);
+
+  if (isNaN(quantity) || quantity < 0) {
+    return res.status(400).json({ message: 'Valid quantity required' });
+  }
+
+  if (isNaN(price) || price <= 0) {
+    return res.status(400).json({ message: 'Valid price required' });
+  }
+
   try {
+    // First check if the item exists
+    const checkQuery = 'SELECT * FROM inventory WHERE ProductID = ?';
     const exists = await new Promise((resolve, reject) => {
       db.query(checkQuery, [productId], (err, results) => {
         if (err) {
@@ -707,34 +725,36 @@ app.put('/api/inventory/:id', async (req, res) => {
       return res.status(404).json({ message: 'Item not found' });
     }
 
+    // Update the item
     const updateQuery = `
       UPDATE inventory 
-      SET ProductName = ?, Price = ?, InventoryQuantity = ?
+      SET ProductName = ?, 
+          ProductDescription = ?, 
+          InventoryQuantity = ?, 
+          Price = ?, 
+          Tag = ?
       WHERE ProductID = ?
     `;
-    
+
     await new Promise((resolve, reject) => {
-      db.query(updateQuery, [ProductName, Price, InventoryQuantity, productId], (err, results) => {
-        if (err) {
-          console.error('Database error:', err);
-          reject(err);
-        } else {
-          resolve(results);
+      db.query(
+        updateQuery, 
+        [ProductName, ProductDescription || '', quantity, price, Tag || '', productId],
+        (err, result) => {
+          if (err) {
+            console.error('Database error:', err);
+            reject(err);
+          } else {
+            resolve(result);
+          }
         }
-      });
+      );
     });
 
-    // Check if inventory is low after update
-    if (InventoryQuantity <= 5) {
-      const item = { 
-        ProductID: productId,
-        ProductName,
-        InventoryQuantity
-      };
-      await sendLowStockNotification(item);
-    }
-
-    res.status(200).json({ message: 'Inventory item updated successfully' });
+    res.status(200).json({ 
+      message: 'Item updated successfully',
+      productId: productId
+    });
   } catch (err) {
     console.error('Error updating inventory item:', err);
     res.status(500).json({ 
@@ -795,15 +815,18 @@ app.post('/api/add-inventory', async (req, res) => {
 
   // Validate input
   if (!ProductName?.trim()) {
-    return res.status(400).json({ error: 'Product name required' });
+    return res.status(400).json({ message: 'Product name required' });
   }
 
-  if (!InventoryQuantity || InventoryQuantity < 0) {
-    return res.status(400).json({ error: 'Valid quantity required' });
+  const quantity = Number(InventoryQuantity);
+  const price = Number(Price);
+
+  if (isNaN(quantity) || quantity < 0) {
+    return res.status(400).json({ message: 'Valid quantity required' });
   }
 
-  if (!Price || Price <= 0) {
-    return res.status(400).json({ error: 'Valid price required' });
+  if (isNaN(price) || price <= 0) {
+    return res.status(400).json({ message: 'Valid price required' });
   }
 
   try {
@@ -813,24 +836,100 @@ app.post('/api/add-inventory', async (req, res) => {
       VALUES (?, ?, ?, ?, ?, ?)
     `;
     
-    db.query(
-      query, 
-      [ProductName, ProductDescription, InventoryQuantity, Price, Tag, imageUrl],
-      (err, result) => {
-        if (err) {
-          console.error('DB Error:', err);
-          res.status(500).json({ error: 'Failed to add item' });
-          return;
+    const result = await new Promise((resolve, reject) => {
+      db.query(
+        query, 
+        [ProductName, ProductDescription || '', quantity, price, Tag || '', imageUrl || ''],
+        (err, result) => {
+          if (err) {
+            console.error('Database error:', err);
+            reject(err);
+          } else {
+            resolve(result);
+          }
         }
-        res.json({ 
-          message: 'Item added!',
-          id: result.insertId 
-        });
-      }
-    );
+      );
+    });
+
+    res.status(201).json({ 
+      message: 'Item added successfully',
+      productId: result.insertId 
+    });
   } catch (err) {
-    console.error('Server Error:', err);
-    res.status(500).json({ error: 'Something went wrong' });
+    console.error('Error adding inventory item:', err);
+    res.status(500).json({ 
+      message: 'Error adding inventory item',
+      error: err.message 
+    });
+  }
+});
+
+// Get all inventory items
+app.get('/api/inventory', async (req, res) => {
+  try {
+    const query = 'SELECT * FROM inventory';
+    await new Promise((resolve, reject) => {
+      db.query(query, (err, results) => {
+        if (err) {
+          console.error('Database error:', err);
+          reject(err);
+        } else {
+          res.status(200).json(results);
+          resolve();
+        }
+      });
+    });
+  } catch (err) {
+    console.error('Error fetching inventory:', err);
+    res.status(500).json({ 
+      message: 'Error fetching inventory',
+      error: err.message 
+    });
+  }
+});
+
+// Delete inventory item
+app.delete('/api/inventory/:id', async (req, res) => {
+  const productId = req.params.id;
+
+  try {
+    // First check if the item exists
+    const checkQuery = 'SELECT * FROM inventory WHERE ProductID = ?';
+    const exists = await new Promise((resolve, reject) => {
+      db.query(checkQuery, [productId], (err, results) => {
+        if (err) {
+          console.error('Database error:', err);
+          reject(err);
+        } else {
+          resolve(results.length > 0);
+        }
+      });
+    });
+
+    if (!exists) {
+      return res.status(404).json({ message: 'Item not found' });
+    }
+
+    // Delete the item
+    const deleteQuery = 'DELETE FROM inventory WHERE ProductID = ?';
+    await new Promise((resolve, reject) => {
+      db.query(deleteQuery, [productId], (err, results) => {
+        if (err) {
+          console.error('Database error:', err);
+          reject(err);
+        } else {
+          resolve(results);
+        }
+      });
+    });
+
+    res.status(200).json({ message: 'Inventory item deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting inventory item:', err);
+    res.status(500).json({ 
+      message: 'Error deleting inventory item',
+      error: err.message 
+    });
   }
 });
 

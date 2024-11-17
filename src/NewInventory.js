@@ -50,31 +50,35 @@ const NewInventory = () => {
       return;
     }
 
-    if (!product.InventoryQuantity || product.InventoryQuantity < 0) {
+    const quantity = Number(product.InventoryQuantity);
+    const price = Number(product.Price);
+
+    if (isNaN(quantity) || quantity < 0) {
       setError('Please enter a valid quantity');
       return;
     }
 
-    if (!product.Price || product.Price <= 0) {
+    if (isNaN(price) || price <= 0) {
       setError('Please enter a valid price');
       return;
     }
 
     try {
-      const response = await fetch('https://team6project.onrender.com/api/add-inventory', {
+      const response = await fetch('http://localhost:3001/api/add-inventory', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           ...product,
-          InventoryQuantity: Math.floor(Number(product.InventoryQuantity)),
-          Price: Number(product.Price).toFixed(2)
+          InventoryQuantity: quantity,
+          Price: price
         })
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const data = await response.json();
         throw new Error(data.message || 'Failed to add item');
       }
 
@@ -92,7 +96,7 @@ const NewInventory = () => {
       
     } catch (err) {
       console.error('Error:', err);
-      setError(err.message || 'Something went wrong');
+      setError(err.message || 'Error adding new inventory item');
     }
   };
 
