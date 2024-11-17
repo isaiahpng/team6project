@@ -40,7 +40,7 @@ const RightCart = ({ cart, setCart, user}) => {
       };
   
       // Send the order data to the backend
-      const response = await fetch('https://team6project.onrender.com/api/order', {
+      const response = await fetch('https://team6project.onrender.com/api/orders', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
