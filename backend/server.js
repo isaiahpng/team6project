@@ -7,7 +7,7 @@ const app = express();
 const port = process.env.PORT || 3001; // Use environment variable or default to 3001
 
 // Use CORS middleware
-app.use(cors({ origin: 'https://team6possystem.netlify.app' }));
+app.use(cors());
 app.use(express.json()); // Add this line to parse JSON requests
 
 const db = mysql.createConnection({
