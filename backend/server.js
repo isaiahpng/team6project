@@ -60,14 +60,14 @@ app.get('/api/getShoppingCartId', (req, res) => {
 
 // Route for placing an order and updating inventory
 app.post('/api/order', (req, res) => {
-  const { UserID, OrderStatus, OrderDate, ShoppingCartID, CartItems, totalAmount } = req.body;
+  const { UserID, OrderStatus, OrderDate, ShoppingCartID, CartItems } = req.body;
 
   const orderQuery = `
-    INSERT INTO orders (UserID, OrderStatus, OrderDate, ShoppingCartID, totalAmount) 
-    VALUES (?, ?, ?, ?, ?)
+    INSERT INTO orders (UserID, OrderStatus, OrderDate, ShoppingCartID) 
+    VALUES (?, ?, ?, ?)
   `;
 
-  db.query(orderQuery, [UserID, OrderStatus, OrderDate, ShoppingCartID, totalAmount], (err) => {
+  db.query(orderQuery, [UserID, OrderStatus, OrderDate, ShoppingCartID], (err) => {
     if (err) {
       console.error('Error placing order:', err.stack);
       return res.status(500).json({ message: 'Error placing order' });
