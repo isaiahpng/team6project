@@ -1,19 +1,5 @@
 /* Top NavBar */
 
-.button {
-  background: #0056b3;
-  color: #fff;
-  text-align: center;
-  padding: 10px 16px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-}
-.center {
-  display: flex;
-  justify-content: center;
-}
-
 .top-nav {
   display: flex;
   justify-content: space-between;
@@ -64,35 +50,15 @@
 }
 
 .welcome-message {
-  font-weight: bold; /* Makes the text bold */
-  text-align: center; /* Aligns text to the left */
-  margin-right: 10px; /* Adjust margin to move it closer to the left */
-  font-size: 1.5em; /* You can adjust the size as needed */
-}
-.welcome-notification {
-  font-weight: bold; /* Makes the text bold */
-  text-align: center; /* Aligns text to the left */
-  margin-right: 10px; /* Adjust margin to move it closer to the left */
-  font-size: 1em; /* You can adjust the size as needed */
-  font-weight: 500;
-  margin-right: 10px;
-  cursor: pointer;
+  font-weight: bold;  /* Makes the text bold */
+  text-align: center;   /* Aligns text to the left */
+  margin-right: 10px;   /* Adjust margin to move it closer to the left */
+  font-size: 1.5em;   /* You can adjust the size as needed */
 }
 
 /* Modal styles */
-
-.modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
 .modal-overlay {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
@@ -103,12 +69,6 @@
   justify-content: center;
   align-items: center;
   z-index: 1000;
-}
-.modal-content {
-  position: relative;
-  background: #fff;
-  z-index: 1001;
-  border-radius: 10px;
 }
 
 .login-modal {
@@ -152,13 +112,6 @@
 
 .login-modal .close-button:hover {
   background-color: #c82333;
-}
-.login_clickhere {
-  text-align: center;
-}
-.login_clickhere a {
-  color: #0056b3;
-  cursor: pointer;
 }
 
 .error-message {
@@ -218,7 +171,7 @@
 
 /* Right Cart */
 .right-cart {
-  background-color: #f7f7f7; /* Light background color for the cart */
+  background-color: #f7f7f7;; /* Light background color for the cart */
   padding: 20px; /* Padding inside the cart */
   width: 300px; /* Fixed width for the cart */
   margin-top: 20px;
@@ -232,24 +185,11 @@
 .cart-item {
   display: flex; /* Use flexbox for layout */
   justify-content: space-between; /* Space between item name and price */
-  margin-bottom: 6px;
-}
-.cart-item-container {
   padding: 10px; /* Padding inside each item box */
-  background-color: #fff; /* White background for item boxes */
   border: 1px solid #ccc; /* Border for each item box */
   border-radius: 5px; /* Rounded corners for item boxes */
   margin-bottom: 10px; /* Space between items */
-}
-.cart-item-remove {
-  margin-top: 6px;
-  padding: 4px;
-  border-radius: 5px;
-  background: #0056b3;
-  color: #fff;
-  font-size: 12px;
-  padding: 4px 6px;
-  cursor: pointer;
+  background-color: #fff; /* White background for item boxes */
 }
 
 .cart-item:last-child {
@@ -277,10 +217,7 @@
 /* InventoryDash */
 .inventory-container {
   display: grid; /* Use grid layout */
-  grid-template-columns: repeat(
-    auto-fill,
-    minmax(200px, 1fr)
-  ); /* Responsive grid */
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); /* Responsive grid */
   gap: 20px; /* Space between grid items */
   padding: 20px; /* Padding around the container */
 }
@@ -317,10 +254,7 @@
 /* Inventory */
 .inventory-container {
   display: grid; /* Use grid layout */
-  grid-template-columns: repeat(
-    auto-fill,
-    minmax(200px, 1fr)
-  ); /* Responsive grid */
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); /* Responsive grid */
   gap: 20px; /* Space between grid items */
   padding: 20px; /* Padding around the container */
 }
@@ -384,10 +318,7 @@
 
 .order-history-list {
   display: grid; /* Use grid layout */
-  grid-template-columns: repeat(
-    auto-fill,
-    minmax(250px, 1fr)
-  ); /* Responsive grid */
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); /* Responsive grid */
   gap: 20px; /* Space between grid items */
 }
 
@@ -422,15 +353,6 @@ form h2 {
 }
 
 form input {
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 15px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  box-sizing: border-box;
-  font-size: 16px;
-}
-form select {
   width: 100%;
   padding: 10px;
   margin-bottom: 15px;
@@ -479,14 +401,8 @@ form button:hover {
   width: 100%;
   height: 100%;
   display: grid;
-  grid-template-columns: repeat(
-    auto-fill,
-    minmax(225px, 1fr)
-  ); /* Automatically adjust columns */
-  grid-template-rows: repeat(
-    auto-fill,
-    minmax(350px, 1fr)
-  ); /* Adjust rows similarly */
+  grid-template-columns: repeat(auto-fill, minmax(225px, 1fr)); /* Automatically adjust columns */
+  grid-template-rows: repeat(auto-fill, minmax(350px, 1fr));   /* Adjust rows similarly */
   z-index: 1;
 }
 
@@ -525,12 +441,4 @@ form button:hover {
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
-.delete {
-  background: #c82333;
-  margin-top: 20px;
-  text-align: center;
-  padding: 10px 0;
-  color: #fff;
-  border-radius: 5px;
-  cursor: pointer;
-}
+

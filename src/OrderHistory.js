@@ -1,103 +1,81 @@
-import React, { useState, useEffect } from "react";
-import { axios } from "./utils";
+import React, { useState, useEffect } from 'react';
 
-const OrderHistory = ({ user, isAdmin }) => {
-  const [orders, setOrders] = useState([]);
-  const [sortOption, setSortOption] = useState("OrderDate&DESC");
+const OrderHistory = ({ user }) => {
+    const [orders, setOrders] = useState([]);
+    const [sortOption, setSortOption] = useState('dateAsc'); // Default sort option
 
-  const [startDate, setStartDate] = useState("2024-01-01");
-  const [endDate, setEndDate] = useState("2024-12-31");
+    useEffect(() => {
+        if (user) {
+            // Fetch order history data for the logged-in user
+            fetch(`https://team6project.onrender.com/api/orders?userId=${user.UserID}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    setOrders(data);
+                })
+                .catch(error => {
+                    console.error('Error fetching order history:', error);
+                });
+        }
+    }, [user]); // Depend on user state to refetch on login
 
-  const fetchAdminOrders = async () => {
-    const token = localStorage.getItem("token");
-    const by = sortOption.split("&")[0];
-    const order = sortOption.split("&")[1];
-    const response = await axios.get(
-      `/report/orders/admin?sortBy=${by}&sortOrder=${order}&startDate=${startDate}&endDate=${endDate}`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
-    setOrders(response.data.results);
-  };
-  const fetchOwnOrders = async () => {
-    const token = localStorage.getItem("token");
-    const response = await axios.get(
-      `/report/orders/customer/${user.UserId}&startDate=${startDate}&endDate=${endDate}`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
-    setOrders(response.data.results);
-  };
+    // Function to sort orders based on selected option
+    const sortOrders = () => {
+        let sortedOrders = [...orders];
+        switch (sortOption) {
+            case 'dateAsc':
+                sortedOrders.sort((a, b) => new Date(a.OrderDate) - new Date(b.OrderDate));
+                break;
+            case 'dateDesc':
+                sortedOrders.sort((a, b) => new Date(b.OrderDate) - new Date(a.OrderDate));
+                break;
+            default:
+                break;
+        }
+        return sortedOrders;
+    };
 
-  useEffect(() => {
-    setOrders([]);
-    if (isAdmin) {
-      fetchAdminOrders();
-    } else {
-      fetchOwnOrders();
-    }
-  }, [sortOption]);
+    // Get sorted orders
+    const sortedOrders = sortOrders();
+    console.log("sortedOrders:", sortedOrders);
 
-  return (
-    <div className="order-history-container">
-      <div className="sort-controls">
-        <label htmlFor="sort">Sort by: </label>
-        <select
-          id="sort"
-          value={sortOption}
-          onChange={(e) => setSortOption(e.target.value)}
-        >
-          <option value="OrderDate&DESC">Date: Newest to Oldest</option>
-          <option value="OrderDate&ASC">Date: Oldest to Newest</option>
-        </select>
-      </div>
-      <div style={{ display: "flex" }}>
-        <div>
-          <label for="start">Start date:</label>
-          <input
-            type="date"
-            id="start"
-            name="start-date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-          />
-        </div>
-        <div>
-          <label for="start">End date:</label>
-          <input
-            type="date"
-            id="end"
-            name="end-date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-          />
-        </div>
-        <div>
-          <button onClick={isAdmin ? fetchAdminOrders : fetchOwnOrders}>
-            Fetch
-          </button>
-        </div>
-      </div>
-
-      {orders.length === 0 ? (
-        <p>No orders found.</p>
-      ) : (
-        <div className="inventory-container">
-          {orders.map((order) => (
-            <div className="order-item" key={order.OrderID}>
-              <p>Order ID: {order.OrderID}</p>
-              <p>Customer ID: {order.CustomerID}</p>
-              <p>Status: {order.OrderStatusText}</p>
-              <p>Total: ${order.OrderTotal}</p>
-              <p>Date: {new Date(order.OrderDate).toLocaleString()}</p>
+    return (
+        <div className="order-history-container">
+            <div className="sort-controls">
+                <label htmlFor="sort">Sort by: </label>
+                <select
+                    id="sort"
+                    value={sortOption}
+                    onChange={(e) => setSortOption(e.target.value)}
+                >
+                    <option value="dateAsc">Date: Oldest to Newest</option>
+                    <option value="dateDesc">Date: Newest to Oldest</option>
+                </select>
             </div>
-          ))}
+
+            {sortedOrders.length === 0 ? (
+                <p>No orders found.</p>
+            ) : (
+                <div className="order-list">
+                    {sortedOrders.map(order => (
+                        <div className="order-item" key={order.OrderID}>
+                            <p>Order ID: {order.OrderID}</p>
+                            <p>User ID: {order.UserID}</p>
+                            <p>Status: {order.OrderStatus}</p>
+                            <p>Date: {new Date(order.OrderDate).toLocaleString()}</p>
+                            <p>Shopping Cart ID: {order.ShoppingCartID}</p>
+                        </div>
+                    ))}
+                </div>
+            )}
         </div>
-      )}
-    </div>
-  );
+    );
 };
 
 export default OrderHistory;
+
+
