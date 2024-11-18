@@ -1,5 +1,5 @@
 import defaultAxios from "axios";
 
 export const axios = defaultAxios.create({
-  baseURL: "http://localhost:3001/api",
+  baseURL: "https://team6project.onrender.com/api",
 });
