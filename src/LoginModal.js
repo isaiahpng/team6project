@@ -9,7 +9,7 @@ const LoginModal = ({ show, onClose, onLogin }) => {
   const handleLoginSubmit = async () => {
     setErrorMessage(''); // Clear previous error message
     try {
-      const response = await fetch('http://localhost:3001/api/login', {
+      const response = await fetch('https://team6project.onrender.com/api/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -24,7 +24,8 @@ const LoginModal = ({ show, onClose, onLogin }) => {
       }
 
       const data = await response.json();
-      onLogin(data.username); // Pass the username back to the parent component
+      console.log('Login successful:', data);
+      onLogin(data); // Pass the username back to the parent component
       onClose();
     } catch (error) {
       console.error('Error logging in:', error);

@@ -1,58 +1,109 @@
-import React, { useEffect, useState } from 'react';
-import './App.css';
-import TopNav from './TopNav';
-import LeftNav from './LeftNav';
-import RightCart from './RightCart';
-import InventoryDashboard from './InventoryDash';
-import OrderHistory from './OrderHistory';
-import Inventory from './Inventory';
+import React, { useState, useEffect, act } from "react";
+import "./App.css";
+import TopNav from "./TopNav";
+import LeftNav from "./LeftNav";
+import RightCart from "./RightCart";
+import InventoryDashboard from "./InventoryDash";
+import OrderHistory from "./OrderHistory";
+import Inventory from "./Inventory";
+import NewInventory from "./NewInventory";
+import OrderHistoryAdmin from "./OrderHistoryAdmin";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import { axios } from "./utils";
 
 function App() {
-    const [cart, setCart] = useState([]); // State for cart
-    const [user, setUser] = useState(null); // State for logged-in user
-    const [activePage, setActivePage] = useState('Dashboard'); // State to track active page
+  const [cart, setCart] = useState([]);
+  const [user, setUser] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [activePage, setActivePage] = useState("Login");
 
-    const addToCart = (item) => {
-        setCart((prevCart) => [...prevCart, item]);
-    };
+  const fetchCart = async (token) => {
+    const response = await axios.get("/cart", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    setCart(response.data);
+  };
 
-    const handleLogin = (username) => {
-        setUser(username);
-    };
+  useEffect(() => {
+    (async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (token) {
+          const response = await axios.post(
+            "/user/verify",
+            {},
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          setUser(response.data.user);
+          setIsAdmin(response.data.user.isAdmin ? true : false);
+          setActivePage("Dashboard");
 
-    const handleLogout = () => {
-        setUser(null);
-        setCart([]); // Optionally clear the cart when the user logs out
-    };
-
-    // Function to render the active page component
-    const renderPage = () => {
-        switch (activePage) {
-            case 'Dashboard':
-                return <InventoryDashboard addToCart={addToCart} />;
-            case 'Order History':
-                return <OrderHistory user={user} />; // Pass user prop to OrderHistory
-            case 'Inventory':
-                return <Inventory user={user} />; // Pass user prop to Inventory
-            default:
-                return <InventoryDashboard addToCart={addToCart} />;
+          await fetchCart(token);
         }
-    };
+      } catch (error) {
+        setUser(null);
+      }
+    })();
+  }, []);
 
+  const handleLogout = () => {
+    setUser(null);
+    setIsAdmin(false);
+    setCart([]);
+    setActivePage("Dashboard");
+    localStorage.removeItem("token");
+    window.location.reload();
+  };
+
+  const renderPage = () => {
+    switch (activePage) {
+      case "Dashboard":
+        return <InventoryDashboard cart={cart} fetchCart={fetchCart} />;
+      case "Order History":
+        return <OrderHistory user={user} isAdmin={isAdmin} />;
+      case "Inventory":
+        return <Inventory user={user} isAdmin={isAdmin} />;
+      case "New Inventory":
+        return <NewInventory />;
+      case "Admin Order History":
+        return <OrderHistory user={user} isAdmin={isAdmin} />;
+      default:
+        return <InventoryDashboard cart={cart} fetchCart={fetchCart} />;
+    }
+  };
+
+  if (!user) {
     return (
-        <div className="app-container">
-            <TopNav user={user} onLogin={handleLogin} onLogout={handleLogout} />
-            <div className="main-content">
-                <LeftNav setActivePage={setActivePage} /> {/* Pass setActivePage to LeftNav */}
-                <div className="dashboard">
-                    {renderPage()}
-                </div>
-                <RightCart cart={cart} setCart={setCart} user={user} /> {/* Pass user here */}
-            </div>
-        </div>
+      <>
+        {activePage === "Login" ? (
+          <Login setActivePage={setActivePage} />
+        ) : null}
+        {activePage === "Register" ? (
+          <Register setActivePage={setActivePage} />
+        ) : null}
+      </>
     );
+  }
+
+  return (
+    <div className="app-container">
+      <TopNav user={user} onLogout={handleLogout} />
+      <div className="main-content">
+        <LeftNav setActivePage={setActivePage} isAdmin={isAdmin} />
+        <div className="dashboard">
+          <h1>{activePage}</h1>
+          {renderPage()}
+        </div>
+        <RightCart
+          cart={cart}
+          setCart={setCart}
+          user={user}
+          fetchCart={fetchCart}
+        />
+      </div>
+    </div>
+  );
 }
 
 export default App;
-
-
