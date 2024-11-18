@@ -6,31 +6,63 @@ exports.getAllInventory = asyncHandler(async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
+
     const search = req.query.search || "";
     const tag = req.query.tag || "";
+    const minPrice = parseFloat(req.query.minPrice) || 0;
+    const maxPrice = parseFloat(req.query.maxPrice) || Number.MAX_SAFE_INTEGER;
+    const minQuantity = parseInt(req.query.minQuantity) || 0;
+    const sortBy = req.query.sortBy || "ProductID";
+    const sortOrder =
+      req.query.sortOrder?.toUpperCase() === "DESC" ? "DESC" : "ASC";
+
     let queryStr = `
         SELECT ProductID, ProductName, Price, ProductDescription, 
                InventoryQuantity, Tag, imageUrl
         FROM inventory
         WHERE 1=1
-      `;
+    `;
+
     let countQuery = `
         SELECT COUNT(*) as total 
         FROM inventory 
         WHERE 1=1
-      `;
+    `;
+
     const queryParams = [];
+
     if (search) {
       queryStr += ` AND (ProductName LIKE ? OR ProductDescription LIKE ?)`;
       countQuery += ` AND (ProductName LIKE ? OR ProductDescription LIKE ?)`;
       queryParams.push(`%${search}%`, `%${search}%`);
     }
+
     if (tag) {
       queryStr += ` AND Tag = ?`;
       countQuery += ` AND Tag = ?`;
       queryParams.push(tag);
     }
-    queryStr += ` ORDER BY ProductID LIMIT ? OFFSET ?`;
+
+    queryStr += ` AND Price >= ? AND Price <= ?`;
+    countQuery += ` AND Price >= ? AND Price <= ?`;
+    queryParams.push(minPrice, maxPrice);
+
+    if (minQuantity > 0) {
+      queryStr += ` AND InventoryQuantity >= ?`;
+      countQuery += ` AND InventoryQuantity >= ?`;
+      queryParams.push(minQuantity);
+    }
+
+    const validSortFields = [
+      "ProductID",
+      "ProductName",
+      "Price",
+      "InventoryQuantity",
+    ];
+    const sortField = validSortFields.includes(sortBy) ? sortBy : "ProductID";
+    queryStr += ` ORDER BY ${sortField} ${sortOrder}`;
+
+    queryStr += ` LIMIT ? OFFSET ?`;
     queryParams.push(limit, offset);
 
     const [countResult] = await db.query(countQuery, queryParams.slice(0, -2));
@@ -43,15 +75,34 @@ exports.getAllInventory = asyncHandler(async (req, res) => {
       "SELECT DISTINCT Tag FROM inventory WHERE Tag IS NOT NULL"
     );
 
+    const [priceRange] = await db.query(`
+      SELECT 
+        MIN(Price) as minPrice,
+        MAX(Price) as maxPrice,
+        MIN(InventoryQuantity) as minQuantity,
+        MAX(InventoryQuantity) as maxQuantity
+      FROM inventory
+    `);
+
     res.json({
       inventory,
       tags: tags.map((t) => t.Tag).filter(Boolean),
+      priceRange: priceRange[0],
       pagination: {
         total,
         page,
         totalPages,
         prevPage: page > 1 ? page - 1 : null,
         nextPage: page < totalPages ? page + 1 : null,
+      },
+      filters: {
+        search,
+        tag,
+        minPrice,
+        maxPrice,
+        minQuantity,
+        sortBy: sortField,
+        sortOrder,
       },
     });
   } catch (error) {
@@ -296,5 +347,45 @@ exports.updateInventory = asyncHandler(async (req, res) => {
     res.status(500).json({
       error: "Failed to update product",
     });
+  }
+});
+exports.getAllImages = asyncHandler(async (_, res) => {
+  try {
+    const [results] = await db.query(
+      `SELECT 
+        ProductID,
+        ProductName,
+        imageUrl 
+       FROM inventory 
+       WHERE imageUrl IS NOT NULL`
+    );
+
+    res.json({
+      count: results.length,
+      images: results,
+    });
+  } catch (error) {
+    console.error("Get images error:", error);
+    res.status(500).json({ error: "Failed to fetch images" });
+  }
+});
+exports.getAllTags = asyncHandler(async (_, res) => {
+  try {
+    const [results] = await db.query(
+      `SELECT DISTINCT Tag 
+       FROM inventory 
+       WHERE Tag IS NOT NULL 
+       ORDER BY Tag`
+    );
+
+    const tags = results.map((row) => row.Tag);
+
+    res.json({
+      count: tags.length,
+      tags: tags,
+    });
+  } catch (error) {
+    console.error("Get tags error:", error);
+    res.status(500).json({ error: "Failed to fetch tags" });
   }
 });

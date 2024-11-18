@@ -14,6 +14,7 @@ app.use("/api/user", require("./routes/user"));
 app.use("/api/inventory", require("./routes/inventory"));
 app.use("/api/notification", require("./routes/notification"));
 app.use("/api/report", require("./routes/report"));
+app.use("/api/cart", require("./routes/cart"));
 
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);

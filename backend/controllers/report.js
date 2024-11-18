@@ -28,35 +28,93 @@ exports.getItemQuantityAndRevenue = asyncHandler(async (req, res) => {
 });
 
 // Report 2: Customer Order History
+
+const getOrderStatusText = (status) => {
+  const statusMap = {
+    0: "Cancelled",
+    1: "Pending",
+    2: "Processing",
+    3: "Shipped",
+    4: "Delivered",
+  };
+  return statusMap[status] || "Unknown";
+};
 exports.getOrderHistoryForCustomer = asyncHandler(async (req, res) => {
   try {
     const { customerId } = req.params;
     let { startDate, endDate } = req.query;
+
+    const sortBy = req.query.sortBy || "OrderDate";
+    const sortOrder =
+      req.query.sortOrder?.toUpperCase() === "DESC" ? "DESC" : "ASC";
+
+    const validSortFields = [
+      "OrderDate",
+      "OrderID",
+      "PaymentAmount",
+      "OrderStatus",
+    ];
+    if (!validSortFields.includes(sortBy)) {
+      return res.status(400).json({ error: "Invalid sort field" });
+    }
+
     startDate = startDate || "2000-01-01";
-    endDate = endDate || new Date().toISOString().split("T")[0];
+    endDate = endDate || "2030-12-31";
+
     if (!req.user.isAdmin && req.user.userId !== parseInt(customerId)) {
       return res.status(403).json({
         error: "You do not have permission to view this customer's history",
       });
     }
+
     const [results] = await db.query(
       "CALL rptOrderHistoryForCustomer(?, ?, ?)",
       [customerId, startDate, endDate]
     );
+
+    const sortedResults = results[0].sort((a, b) => {
+      if (sortBy === "OrderDate") {
+        const dateA = new Date(a[sortBy]);
+        const dateB = new Date(b[sortBy]);
+        return sortOrder === "DESC" ? dateB - dateA : dateA - dateB;
+      }
+
+      if (typeof a[sortBy] === "number") {
+        return sortOrder === "DESC"
+          ? b[sortBy] - a[sortBy]
+          : a[sortBy] - b[sortBy];
+      }
+
+      if (typeof a[sortBy] === "string") {
+        return sortOrder === "DESC"
+          ? b[sortBy].localeCompare(a[sortBy])
+          : a[sortBy].localeCompare(b[sortBy]);
+      }
+
+      return 0;
+    });
+
+    const formattedResults = sortedResults.map((order) => ({
+      ...order,
+      OrderStatusText: getOrderStatusText(order.OrderStatus),
+    }));
+
     res.json({
-      results: results[0],
+      results: formattedResults,
       metadata: {
         customerId,
         startDate,
         endDate,
+        sortBy,
+        sortOrder,
         reportGeneratedAt: new Date().toISOString(),
       },
     });
   } catch (error) {
     console.error("Report error:", error);
-    res
-      .status(500)
-      .json({ error: "Failed to generate customer order history report" });
+    res.status(500).json({
+      error: "Failed to generate customer order history report",
+    });
   }
 });
 
@@ -65,19 +123,65 @@ exports.getAdminOrderHistory = asyncHandler(async (req, res) => {
   try {
     const { customerId } = req.query;
     let { startDate, endDate } = req.query;
+
+    const sortBy = req.query.sortBy || "OrderDate";
+    const sortOrder =
+      req.query.sortOrder?.toUpperCase() === "DESC" ? "DESC" : "ASC";
+
+    const validSortFields = [
+      "OrderDate",
+      "OrderID",
+      "PaymentAmount",
+      "OrderStatus",
+    ];
+    if (!validSortFields.includes(sortBy)) {
+      return res.status(400).json({ error: "Invalid sort field" });
+    }
+
     startDate = startDate || "2000-01-01";
-    endDate = endDate || new Date().toISOString().split("T")[0];
+    endDate = endDate || "2030-12-31";
+
     const [results] = await db.query("CALL rptAdminOrderHistory(?, ?, ?)", [
       customerId || null,
       startDate,
       endDate,
     ]);
+
+    const sortedResults = results[0].sort((a, b) => {
+      if (sortBy === "OrderDate") {
+        const dateA = new Date(a[sortBy]);
+        const dateB = new Date(b[sortBy]);
+        return sortOrder === "DESC" ? dateB - dateA : dateA - dateB;
+      }
+
+      if (typeof a[sortBy] === "number") {
+        return sortOrder === "DESC"
+          ? b[sortBy] - a[sortBy]
+          : a[sortBy] - b[sortBy];
+      }
+
+      if (typeof a[sortBy] === "string") {
+        return sortOrder === "DESC"
+          ? b[sortBy].localeCompare(a[sortBy])
+          : a[sortBy].localeCompare(b[sortBy]);
+      }
+
+      return 0;
+    });
+
+    const formattedResults = sortedResults.map((order) => ({
+      ...order,
+      OrderStatusText: getOrderStatusText(order.OrderStatus),
+    }));
+
     res.json({
-      results: results[0],
+      results: formattedResults,
       metadata: {
         customerId: customerId || "all",
         startDate,
         endDate,
+        sortBy,
+        sortOrder,
         reportGeneratedAt: new Date().toISOString(),
       },
     });

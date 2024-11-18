@@ -5,14 +5,14 @@ const asyncHandler = require("../utils/asyncHandler");
 
 exports.login = asyncHandler(async (req, res, _) => {
   try {
-    const { email, password } = req.body;
+    const { username, password } = req.body;
 
     const [users] = await db.query(
       `SELECT u.*, c.LoyaltyTier, c.TotalPoints 
        FROM users u
        LEFT JOIN customers c ON u.UserId = c.CustomerID
-       WHERE u.Email = ?`,
-      [email]
+       WHERE u.UserName = ?`,
+      [username]
     );
     const user = users[0];
     if (!user) {
@@ -165,39 +165,52 @@ exports.getAll = asyncHandler(async (req, res, _) => {
   }
 });
 
-exports.deleteUser = asyncHandler(async (req, res, _) => {
+exports.deleteUser = asyncHandler(async (req, res) => {
   const connection = await db.getConnection();
 
   try {
     await connection.beginTransaction();
 
     const { userId } = req.params;
-
     const [userExists] = await connection.query(
       "SELECT UserId FROM users WHERE UserId = ?",
       [userId]
     );
-
     if (userExists.length === 0) {
       await connection.rollback();
       return res.status(404).json({ error: "User not found" });
     }
-    await connection.query("DELETE FROM customers WHERE CustomerID = ?", [
+    await connection.query("DELETE FROM loyalty_points WHERE customerID = ?", [
       userId,
     ]);
+    await connection.query(
+      `DELETE sci FROM shoppingcartitems sci
+       JOIN virtualshoppingcart vsc ON vsc.ShoppingCartID = sci.ShoppingCartID
+       WHERE vsc.CustomerID = ?`,
+      [userId]
+    );
     await connection.query(
       "DELETE FROM virtualshoppingcart WHERE CustomerID = ?",
       [userId]
     );
-    await connection.query("DELETE FROM loyalty_points WHERE customerID = ?", [
+    await connection.query("DELETE FROM payments WHERE CustomerID = ?", [
+      userId,
+    ]);
+    await connection.query("DELETE FROM payment_log WHERE CustomerID = ?", [
+      userId,
+    ]);
+    await connection.query("DELETE FROM orders WHERE UserID = ?", [userId]);
+    await connection.query("DELETE FROM discounts WHERE UserID = ?", [userId]);
+    await connection.query("DELETE FROM notifications WHERE UserID = ?", [
+      userId,
+    ]);
+    await connection.query("DELETE FROM customers WHERE CustomerID = ?", [
       userId,
     ]);
     await connection.query("DELETE FROM users WHERE UserId = ?", [userId]);
-
     await connection.commit();
-
     res.json({
-      message: "User deleted successfully",
+      message: "User and all related data deleted successfully",
       deletedUserId: userId,
     });
   } catch (error) {
@@ -232,6 +245,42 @@ exports.makeAdmin = asyncHandler(async (req, res, _) => {
     console.error("Make admin error:", error);
     res.status(500).json({
       error: "Failed to update admin status",
+    });
+  }
+});
+exports.verifyToken = asyncHandler(async (req, res) => {
+  try {
+    const [user] = await db.query(
+      `SELECT 
+        u.UserId,
+        u.UserName,
+        u.Email,
+        u.isAdmin,
+        u.discount,
+        c.LoyaltyTier,
+        c.TotalPoints
+       FROM users u
+       LEFT JOIN customers c ON c.CustomerID = u.UserId
+       WHERE u.UserId = ?`,
+      [req.user.userId]
+    );
+    if (user.length === 0) {
+      return res.status(404).json({
+        error: "User not found",
+        isValid: false,
+      });
+    }
+    delete user[0].Password;
+
+    res.json({
+      isValid: true,
+      user: user[0],
+    });
+  } catch (error) {
+    console.error("Token verification error:", error);
+    res.status(500).json({
+      error: "Failed to verify token",
+      isValid: false,
     });
   }
 });

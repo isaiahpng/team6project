@@ -3,15 +3,16 @@ import React, { useState, useEffect } from "react";
 import { axios } from "./utils";
 import "./App.css";
 
-const NewInventory = () => {
+const EditInventory = ({ data, onClose }) => {
+  console.log(data);
   const [tags, setTags] = useState([]);
   const [product, setProduct] = useState({
-    productName: "",
-    price: "",
-    productDescription: "",
-    inventoryQuantity: "",
-    tag: "",
-    imageUrl: "",
+    productName: data.ProductName,
+    price: data.Price,
+    productDescription: data.ProductDescription,
+    inventoryQuantity: data.InventoryQuantity,
+    tag: data.Tag,
+    imageUrl: data.imageUrl,
   });
 
   useEffect(() => {
@@ -30,35 +31,40 @@ const NewInventory = () => {
       return copy;
     });
   };
+  const handleDelete = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      await axios.delete(`/inventory/${data.ProductID}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      alert("Product deleted successfully");
+      onClose();
+    } catch (error) {
+      alert("Error:", error.error);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const token = localStorage.getItem("token");
-      await axios.post("/inventory", product, {
+      await axios.put(`/inventory/${data.ProductID}`, product, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      alert("Product created successfully");
-      setProduct({
-        productName: "",
-        price: "",
-        productDescription: "",
-        inventoryQuantity: "",
-        tag: "",
-        imageUrl: "",
-      });
+      alert("Product updated successfully");
+      onClose();
     } catch (error) {
-      console.error("Error:", error);
+      alert("Error:", error.error);
     }
   };
 
   return (
     <form onSubmit={handleSubmit}>
-      <h2>Add New Inventory</h2>
+      <h2>Edit Inventory</h2>
       <input
         type="text"
         name="productName"
-        value={product.ProductName}
+        value={product.productName}
         onChange={handleChange}
         placeholder="Product Name"
         required
@@ -66,14 +72,14 @@ const NewInventory = () => {
       <input
         type="text"
         name="productDescription"
-        value={product.ProductDescription}
+        value={product.productDescription}
         onChange={handleChange}
         placeholder="Product Description"
       />
       <input
         type="number"
         name="inventoryQuantity"
-        value={product.InventoryQuantity}
+        value={product.inventoryQuantity}
         onChange={handleChange}
         placeholder="Quantity"
         required
@@ -82,12 +88,12 @@ const NewInventory = () => {
         type="number"
         name="price"
         step="0.01"
-        value={product.Price}
+        value={product.price}
         onChange={handleChange}
         placeholder="Price"
         required
       />
-      <select name="tag" onChange={handleChange}>
+      <select name="tag" value={product.tag} onChange={handleChange}>
         {tags.map((tag) => (
           <option value={tag}>{tag}</option>
         ))}
@@ -99,9 +105,12 @@ const NewInventory = () => {
         onChange={handleChange}
         placeholder="Image URL"
       />
-      <button type="submit">Add Inventory</button>
+      <button type="submit">Edit Inventory</button>
+      <p className="delete" onClick={handleDelete}>
+        Delete Inventory
+      </p>
     </form>
   );
 };
 
-export default NewInventory;
+export default EditInventory;

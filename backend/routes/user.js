@@ -5,12 +5,14 @@ const {
   getAll,
   deleteUser,
   makeAdmin,
+  verifyToken,
 } = require("../controllers/user");
 const authMiddleware = require("../utils/auth");
 const { adminOnly } = require("../utils/roleCheck");
 
 const router = express.Router({ mergeParams: true });
 
+router.route("/verify").post(authMiddleware, verifyToken);
 router.route("/signup").post(signup);
 router.route("/login").post(login);
 router.route("/").get(authMiddleware, adminOnly, getAll);
