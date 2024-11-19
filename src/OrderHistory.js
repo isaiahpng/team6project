@@ -20,6 +20,7 @@ const OrderHistory = ({ user, isAdmin }) => {
     );
     setOrders(response.data.results);
   };
+
   const fetchOwnOrders = async () => {
     const token = localStorage.getItem("token");
     const response = await axios.get(
@@ -55,7 +56,7 @@ const OrderHistory = ({ user, isAdmin }) => {
       </div>
       <div style={{ display: "flex" }}>
         <div>
-          <label for="start">Start date:</label>
+          <label htmlFor="start">Start date:</label>
           <input
             type="date"
             id="start"
@@ -65,7 +66,7 @@ const OrderHistory = ({ user, isAdmin }) => {
           />
         </div>
         <div>
-          <label for="start">End date:</label>
+          <label htmlFor="end">End date:</label>
           <input
             type="date"
             id="end"
@@ -89,6 +90,8 @@ const OrderHistory = ({ user, isAdmin }) => {
             <div className="order-item" key={order.OrderID}>
               <p>Order ID: {order.OrderID}</p>
               <p>Customer ID: {order.CustomerID}</p>
+              <p>Username: {order.UserName}</p> {/* Added line */}
+              <p>User Email: {order.Email}</p> {/* Added line */}
               <p>Status: {order.OrderStatusText}</p>
               <p>Total: ${order.OrderTotal}</p>
               <p>Date: {new Date(order.OrderDate).toLocaleString()}</p>

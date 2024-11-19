@@ -63,6 +63,8 @@ const OrderHistoryAdmin = ({ user }) => {
                     <tr>
                         <th>Order ID</th>
                         <th>User ID</th>
+                        <th>Username</th>
+                        <th>Email</th>
                         <th>Status</th>
                         <th>Date</th>
                         <th>Shopping Cart ID</th>
@@ -73,6 +75,8 @@ const OrderHistoryAdmin = ({ user }) => {
                         <tr key={order.OrderID}>
                             <td>{order.OrderID}</td>
                             <td>{order.UserID}</td>
+                            <td>{order.UserName}</td>
+                            <td>{order.Email}</td>
                             <td>{order.OrderStatus}</td>
                             <td>{new Date(order.OrderDate).toLocaleString()}</td>
                             <td>{order.ShoppingCartID}</td>
