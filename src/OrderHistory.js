@@ -23,8 +23,11 @@ const OrderHistory = ({ user, isAdmin }) => {
 
   const fetchOwnOrders = async () => {
     const token = localStorage.getItem("token");
+    const by = sortOption.split("&")[0];
+    const order = sortOption.split("&")[1];
     const response = await axios.get(
-      `/report/orders/customer/${user.UserId}?startDate=${startDate}&endDate=${endDate}`,
+      `/report/orders/customer/${user.UserId}?sortBy=${by}&sortOrder=${order}&startDate=${startDate}&endDate=${endDate}`,
+      // `/report/orders/admin?sortBy=${by}&sortOrder=${order}&startDate=${startDate}&endDate=${endDate}`,
       {
         headers: { Authorization: `Bearer ${token}` },
       }
